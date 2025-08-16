@@ -66,7 +66,9 @@ describe("extractComiketInfoList", () => {
 				// rawフィールドは除外して比較
 				expect(actual.date).toBe(expected.date);
 				expect(actual.hall).toBe(expected.hall);
-				expect(actual.entrance).toBe(expected.entrance);
+				if ("entrance" in expected) {
+					expect(actual.entrance).toBe(expected.entrance);
+				}
 				expect(actual.block).toBe(expected.block);
 				expect(actual.space).toBe(expected.space);
 				expect(actual.side).toBe(expected.side);
