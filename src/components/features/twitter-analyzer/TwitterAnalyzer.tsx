@@ -2,11 +2,16 @@
 
 import { AlertCircle, MapPin } from "lucide-react";
 import { useState } from "react";
+import ComiketIsland from "@/components/features/comiket-island/ComiketIsland";
 import { TwitterEmbed } from "@/components/shared/twitter-embed";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TwitterUser } from "@/entities/twitter-user";
 import { isTwitterError } from "@/gateways/twitter-user";
+import {
+	ALL_BLOCKS_ORDER,
+	normalizeBlockName,
+} from "@/utils/comiket-block-map";
 import {
 	type ComiketInfo,
 	extractComiketInfoList,
@@ -21,6 +26,27 @@ export const TwitterAnalyzer = () => {
 	const [comiketInfoList, setComiketInfoList] = useState<ComiketInfo[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+
+	// コミケ情報からブロックごとのブース番号を抽出
+	const getHighlightedBoothsByBlock = (
+		infoList: ComiketInfo[],
+	): Record<string, number[]> => {
+		const result: Record<string, number[]> = {};
+		for (const info of infoList) {
+			if (info.block && info.space) {
+				const normalizedBlock = normalizeBlockName(info.block);
+				const match = info.space.match(/\d+/);
+				if (match) {
+					const boothNumber = Number.parseInt(match[0], 10);
+					if (!result[normalizedBlock]) {
+						result[normalizedBlock] = [];
+					}
+					result[normalizedBlock].push(boothNumber);
+				}
+			}
+		}
+		return result;
+	};
 
 	const handleUrlSubmit = async (url: string) => {
 		setIsLoading(true);
@@ -90,22 +116,66 @@ export const TwitterAnalyzer = () => {
 					</div>
 
 					{comiketInfoList.length > 0 && (
-						<Card>
-							<CardHeader>
-								<CardTitle className="flex items-center gap-2">
-									<MapPin className="h-5 w-5" />
-									コミケ位置情報 ({comiketInfoList.length}件)
-								</CardTitle>
-							</CardHeader>
-							<CardContent className="space-y-3">
-								{comiketInfoList.map((info, index) => (
-									<ComiketInfoCard
-										key={`${info.hall}-${info.space}-${index}`}
-										info={info}
-									/>
-								))}
-							</CardContent>
-						</Card>
+						<div className="space-y-6">
+							<Card>
+								<CardHeader>
+									<CardTitle className="flex items-center gap-2">
+										<MapPin className="h-5 w-5" />
+										コミケ位置情報 ({comiketInfoList.length}件)
+									</CardTitle>
+								</CardHeader>
+								<CardContent className="space-y-3">
+									{comiketInfoList.map((info, index) => (
+										<ComiketInfoCard
+											key={`${info.hall}-${info.space}-${index}`}
+											info={info}
+										/>
+									))}
+								</CardContent>
+							</Card>
+
+							<Card>
+								<CardHeader>
+									<CardTitle>島配置マップ</CardTitle>
+								</CardHeader>
+								<CardContent className="overflow-x-auto">
+									<div className="inline-flex items-center gap-12 pb-2">
+										{(() => {
+											const highlightedByBlock =
+												getHighlightedBoothsByBlock(comiketInfoList);
+											// 右から（イ側から）: 4, 8, 8, 5, 8, 4個のグループ
+											const groupSizes = [4, 8, 8, 5, 8, 4];
+											let index = 0;
+
+											return groupSizes.map((size, _groupIndex) => {
+												const groupBlocks = ALL_BLOCKS_ORDER.slice(
+													index,
+													index + size,
+												);
+												index += size;
+
+												return (
+													<div
+														key={`group-${groupBlocks[0]}-${groupBlocks[groupBlocks.length - 1]}`}
+														className="inline-flex items-center gap-4"
+													>
+														{groupBlocks.map((block) => (
+															<ComiketIsland
+																key={block}
+																block={block}
+																highlightedBooths={
+																	highlightedByBlock[block] || []
+																}
+															/>
+														))}
+													</div>
+												);
+											});
+										})()}
+									</div>
+								</CardContent>
+							</Card>
+						</div>
 					)}
 				</div>
 			)}
