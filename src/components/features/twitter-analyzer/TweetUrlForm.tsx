@@ -38,7 +38,7 @@ export const TweetUrlForm = ({
 	};
 
 	return (
-		<Card className="bg-white/95 backdrop-blur">
+		<Card className="gap-0 bg-white/95 py-0 backdrop-blur">
 			<CardHeader className="px-2 py-1 sm:px-3 sm:py-1.5">
 				<CardTitle className="text-sm sm:text-base">
 					ツイートからブースを保存
