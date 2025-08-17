@@ -13,7 +13,7 @@ export const ZoomControls = () => {
 	return (
 		<div className="absolute top-4 right-4 z-10 flex flex-col gap-2">
 			<Button
-				onClick={() => zoomIn()}
+				onClick={() => zoomIn(0.3)}
 				size="icon"
 				variant="secondary"
 				className="h-10 w-10 shadow-lg"
@@ -22,7 +22,7 @@ export const ZoomControls = () => {
 				<Plus className="h-5 w-5" />
 			</Button>
 			<Button
-				onClick={() => zoomOut()}
+				onClick={() => zoomOut(0.3)}
 				size="icon"
 				variant="secondary"
 				className="h-10 w-10 shadow-lg"
