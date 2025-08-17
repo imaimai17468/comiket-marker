@@ -47,7 +47,7 @@ export const TweetUrlForm = ({
 			<CardContent className="px-2 py-1 sm:px-3 sm:py-1.5">
 				<form onSubmit={handleSubmit}>
 					<div>
-						<div className="flex flex-col gap-0.5 sm:flex-row sm:gap-1">
+						<div className="flex gap-0.5">
 							<Input
 								id={tweetUrlInputId}
 								type="url"
@@ -60,11 +60,7 @@ export const TweetUrlForm = ({
 								disabled={isLoading}
 								className={error ? "border-red-500" : ""}
 							/>
-							<Button
-								type="submit"
-								disabled={isLoading}
-								className="w-full sm:w-auto"
-							>
+							<Button type="submit" disabled={isLoading} className="shrink-0">
 								{isLoading ? (
 									<>
 										<Loader2 className="h-4 w-4 animate-spin" />
