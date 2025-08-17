@@ -169,7 +169,7 @@ export const TwitterAnalyzer = () => {
 			/>
 
 			{/* ツイート入力フォームを左上に配置 */}
-			<div className="absolute top-4 left-4 z-20 w-96 space-y-3">
+			<div className="absolute top-2 right-2 left-2 z-20 space-y-2 sm:top-4 sm:right-auto sm:left-4 sm:w-96 sm:space-y-3">
 				{/* リスト表示ボタン */}
 				<Sheet>
 					<SheetTrigger asChild>
@@ -182,7 +182,7 @@ export const TwitterAnalyzer = () => {
 							リストを表示 ({boothUserMap.size}件)
 						</Button>
 					</SheetTrigger>
-					<SheetContent className="w-[400px] sm:w-[540px]">
+					<SheetContent className="w-full sm:w-[400px] md:w-[540px]">
 						<SheetHeader>
 							<SheetTitle>保存済みブース一覧</SheetTitle>
 							<SheetDescription>
@@ -190,7 +190,7 @@ export const TwitterAnalyzer = () => {
 							</SheetDescription>
 						</SheetHeader>
 						{boothUserMap.size > 0 && (
-							<div className="flex items-center justify-between px-6">
+							<div className="flex items-center justify-between px-4 sm:px-6">
 								<div className="text-muted-foreground text-xs">
 									合計 {boothUserMap.size} 件
 								</div>
@@ -216,7 +216,7 @@ export const TwitterAnalyzer = () => {
 									([key, userData], _index) => (
 										<div
 											key={key}
-											className="group relative cursor-pointer px-6 py-2 transition-colors duration-200 hover:bg-muted/30"
+											className="group relative cursor-pointer px-4 py-2 transition-colors duration-200 hover:bg-muted/30 sm:px-6"
 											onClick={() => handleBoothClick(userData)}
 											onKeyDown={(e) => {
 												if (e.key === "Enter" || e.key === " ") {
@@ -247,7 +247,7 @@ export const TwitterAnalyzer = () => {
 											</div>
 
 											{/* アクションボタン */}
-											<div className="absolute top-3 right-6 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+											<div className="absolute top-3 right-4 flex gap-1 opacity-100 transition-opacity duration-200 sm:right-6 sm:opacity-0 sm:group-hover:opacity-100">
 												<Button
 													variant="ghost"
 													size="sm"

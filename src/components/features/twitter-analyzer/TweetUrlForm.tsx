@@ -39,13 +39,15 @@ export const TweetUrlForm = ({
 
 	return (
 		<Card className="gap-2 bg-white/95 backdrop-blur">
-			<CardHeader className="pb-0">
-				<CardTitle className="text-lg">ツイートからブースを保存</CardTitle>
+			<CardHeader className="px-3 pt-3 pb-0 sm:px-6 sm:pt-6 sm:pb-0">
+				<CardTitle className="text-base sm:text-lg">
+					ツイートからブースを保存
+				</CardTitle>
 			</CardHeader>
-			<CardContent className="pt-0">
+			<CardContent className="px-3 pt-2 pb-3 sm:px-6 sm:pt-0 sm:pb-6">
 				<form onSubmit={handleSubmit} className="space-y-3">
 					<div className="space-y-2">
-						<div className="flex gap-2">
+						<div className="flex flex-col gap-2 sm:flex-row">
 							<Input
 								id={tweetUrlInputId}
 								type="url"
@@ -58,7 +60,11 @@ export const TweetUrlForm = ({
 								disabled={isLoading}
 								className={error ? "border-red-500" : ""}
 							/>
-							<Button type="submit" disabled={isLoading}>
+							<Button
+								type="submit"
+								disabled={isLoading}
+								className="w-full sm:w-auto"
+							>
 								{isLoading ? (
 									<>
 										<Loader2 className="h-4 w-4 animate-spin" />
