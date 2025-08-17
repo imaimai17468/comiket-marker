@@ -12,7 +12,6 @@ import { Button } from "@/components/ui/button";
 import {
 	Sheet,
 	SheetContent,
-	SheetDescription,
 	SheetHeader,
 	SheetTitle,
 	SheetTrigger,
@@ -145,7 +144,9 @@ export const TwitterAnalyzer = () => {
 					const info = firstEntry[1].comiketInfo;
 					if (info.block && info.space) {
 						setTimeout(() => {
-							mapRef.current?.centerOnBooth(info.block, Number(info.space));
+							if (info.block && info.space) {
+								mapRef.current?.centerOnBooth(info.block, Number(info.space));
+							}
 						}, 100);
 					}
 				}
@@ -182,18 +183,15 @@ export const TwitterAnalyzer = () => {
 							リストを表示 ({boothUserMap.size}件)
 						</Button>
 					</SheetTrigger>
-					<SheetContent className="w-full sm:w-[400px] md:w-[540px]">
+					<SheetContent className="w-full gap-2">
 						<SheetHeader>
 							<SheetTitle>保存済みブース一覧</SheetTitle>
-							<SheetDescription>
-								{boothUserMap.size}件のブース情報が保存されています
-							</SheetDescription>
+							<div className="text-muted-foreground text-xs">
+								合計 {boothUserMap.size} 件
+							</div>
 						</SheetHeader>
 						{boothUserMap.size > 0 && (
-							<div className="flex items-center justify-between px-4 sm:px-6">
-								<div className="text-muted-foreground text-xs">
-									合計 {boothUserMap.size} 件
-								</div>
+							<div className="flex justify-end">
 								<Button
 									variant="ghost"
 									size="sm"
@@ -205,7 +203,7 @@ export const TwitterAnalyzer = () => {
 									}}
 									className="h-7 text-destructive text-xs hover:bg-destructive/10 hover:text-destructive"
 								>
-									<Trash2 className="mr-1.5 h-3.5 w-3.5" />
+									<Trash2 className="h-3 w-3" />
 									すべて削除
 								</Button>
 							</div>

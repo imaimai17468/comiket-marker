@@ -11,7 +11,7 @@ export const ZoomControls = () => {
 	const { zoomIn, zoomOut, resetTransform } = useControls();
 
 	return (
-		<div className="absolute right-4 bottom-20 z-10 flex flex-col gap-2 sm:top-4 sm:bottom-auto">
+		<div className="absolute right-4 bottom-4 z-10 flex flex-col gap-2 sm:top-4 sm:bottom-auto">
 			<Button
 				onClick={() => zoomIn(0.3)}
 				size="icon"
