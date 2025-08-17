@@ -1,3 +1,12 @@
+"use client";
+
+import { useState } from "react";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { getBlockInfo } from "@/utils/comiket-block-map";
 import type { BoothPosition, ComiketIslandProps } from "./types";
@@ -6,7 +15,10 @@ const ComiketIsland = ({
 	boothCount,
 	block,
 	highlightedBooths = [],
+	boothUserMap,
+	onBoothClick,
 }: ComiketIslandProps) => {
+	const [selectedBooth, setSelectedBooth] = useState<number | null>(null);
 	// ブロック名が指定されている場合はブロック情報から取得
 	const actualBoothCount = (() => {
 		if (block) {
@@ -59,6 +71,104 @@ const ComiketIsland = ({
 	const upperLayout = fullLayout.slice(0, upperRows);
 	const lowerLayout = fullLayout.slice(upperRows);
 
+	// ブースに関連するユーザー情報を取得
+	const getBoothUserData = (boothNumber: number) => {
+		if (!boothUserMap || !block) return null;
+
+		// 各ホールのブロックをチェック
+		for (const [key, userData] of boothUserMap.entries()) {
+			// キーは "hall-block-space" の形式（hallは空の場合もある）
+			const parts = key.split("-");
+
+			// blockの位置を特定（hallが空の場合は最初のパートが空文字列）
+			if (parts.length >= 3) {
+				// hallが空の場合: ["", "block", "space"]
+				// hallがある場合: ["hall", "block", "space"]
+				const keyBlock = parts[parts.length - 2]; // 後ろから2番目がblock
+				const keySpace = parts[parts.length - 1]; // 最後がspace
+
+				if (keyBlock === block && keySpace === String(boothNumber)) {
+					return userData;
+				}
+			}
+		}
+		return null;
+	};
+
+	// ブースクリック時の処理
+	const handleBoothClick = (boothNumber: number) => {
+		const userData = getBoothUserData(boothNumber);
+		if (userData && onBoothClick) {
+			setSelectedBooth(boothNumber);
+			onBoothClick(userData);
+		}
+	};
+
+	// ブースセルのレンダリング
+	const renderBoothCell = (booth: BoothPosition, key: string) => {
+		const userData = booth.boothNumber
+			? getBoothUserData(booth.boothNumber)
+			: null;
+		const isHighlighted =
+			booth.boothNumber && highlightedBooths.includes(booth.boothNumber);
+		const isSelected = booth.boothNumber === selectedBooth;
+
+		const cellContent = (
+			<td
+				key={key}
+				className={cn(
+					"border border-gray-600 p-2 text-center align-middle transition-colors",
+					isHighlighted
+						? "bg-yellow-300 hover:bg-yellow-400"
+						: "bg-white hover:bg-gray-50",
+					isSelected && "ring-2 ring-blue-500",
+					userData && "cursor-pointer",
+				)}
+				onClick={() => booth.boothNumber && handleBoothClick(booth.boothNumber)}
+				onKeyDown={(e) => {
+					if ((e.key === "Enter" || e.key === " ") && booth.boothNumber) {
+						e.preventDefault();
+						handleBoothClick(booth.boothNumber);
+					}
+				}}
+				tabIndex={userData ? 0 : -1}
+				role={userData ? "button" : undefined}
+			>
+				{booth.boothNumber && (
+					<span
+						className={cn(
+							"text-xs",
+							isHighlighted ? "font-bold text-gray-900" : "text-gray-700",
+						)}
+					>
+						{booth.boothNumber}
+					</span>
+				)}
+			</td>
+		);
+
+		// ユーザー情報がある場合はTooltipでラップ
+		if (userData) {
+			return (
+				<TooltipProvider key={key}>
+					<Tooltip>
+						<TooltipTrigger asChild>{cellContent}</TooltipTrigger>
+						<TooltipContent>
+							<p className="font-semibold">
+								{userData.twitterUser.displayName}
+							</p>
+							<p className="text-gray-300 text-xs">
+								@{userData.twitterUser.username}
+							</p>
+						</TooltipContent>
+					</Tooltip>
+				</TooltipProvider>
+			);
+		}
+
+		return cellContent;
+	};
+
 	return (
 		<div className="flex flex-col items-center">
 			{/* 上部 */}
@@ -67,31 +177,9 @@ const ComiketIsland = ({
 					<tbody>
 						{upperLayout.map((row) => (
 							<tr key={`upper-row-${row[1].boothNumber}`}>
-								{row.map((booth) => (
-									<td
-										key={`booth-${booth.row}-${booth.column}`}
-										className={cn(
-											"border border-gray-600 p-2 text-center align-middle transition-colors",
-											booth.boothNumber &&
-												highlightedBooths.includes(booth.boothNumber)
-												? "bg-yellow-300 hover:bg-yellow-400"
-												: "bg-white hover:bg-gray-50",
-										)}
-									>
-										{booth.boothNumber && (
-											<span
-												className={cn(
-													"text-xs",
-													highlightedBooths.includes(booth.boothNumber)
-														? "font-bold text-gray-900"
-														: "text-gray-700",
-												)}
-											>
-												{booth.boothNumber}
-											</span>
-										)}
-									</td>
-								))}
+								{row.map((booth) =>
+									renderBoothCell(booth, `booth-${booth.row}-${booth.column}`),
+								)}
 							</tr>
 						))}
 					</tbody>
@@ -111,31 +199,12 @@ const ComiketIsland = ({
 					<tbody>
 						{lowerLayout.map((row) => (
 							<tr key={`lower-row-${row[1].boothNumber}`}>
-								{row.map((booth) => (
-									<td
-										key={`booth-${booth.row}-${booth.column}`}
-										className={cn(
-											"border border-gray-600 p-2 text-center align-middle transition-colors",
-											booth.boothNumber &&
-												highlightedBooths.includes(booth.boothNumber)
-												? "bg-yellow-300 hover:bg-yellow-400"
-												: "bg-white hover:bg-gray-50",
-										)}
-									>
-										{booth.boothNumber && (
-											<span
-												className={cn(
-													"text-xs",
-													highlightedBooths.includes(booth.boothNumber)
-														? "font-bold text-gray-900"
-														: "text-gray-700",
-												)}
-											>
-												{booth.boothNumber}
-											</span>
-										)}
-									</td>
-								))}
+								{row.map((booth) =>
+									renderBoothCell(
+										booth,
+										`booth-lower-${booth.row}-${booth.column}`,
+									),
+								)}
 							</tr>
 						))}
 						{/* 48ブースの場合、高さ調整用の透明文字入り行を1行追加 */}
