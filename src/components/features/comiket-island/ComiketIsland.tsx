@@ -1,6 +1,8 @@
 "use client";
 
+import { ExternalLink } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
 	TooltipContent,
@@ -19,6 +21,7 @@ const ComiketIsland = ({
 	onBoothClick,
 }: ComiketIslandProps) => {
 	const [selectedBooth, setSelectedBooth] = useState<number | null>(null);
+	const [openTooltip, setOpenTooltip] = useState<string | null>(null);
 	// ブロック名が指定されている場合はブロック情報から取得
 	const actualBoothCount = (() => {
 		if (block) {
@@ -96,11 +99,11 @@ const ComiketIsland = ({
 	};
 
 	// ブースクリック時の処理
-	const handleBoothClick = (boothNumber: number) => {
+	const handleBoothClick = (boothNumber: number, key: string) => {
 		const userData = getBoothUserData(boothNumber);
-		if (userData && onBoothClick) {
+		if (userData) {
 			setSelectedBooth(boothNumber);
-			onBoothClick(userData);
+			setOpenTooltip(key);
 		}
 	};
 
@@ -132,11 +135,19 @@ const ComiketIsland = ({
 					isSelected && "ring-2 ring-blue-500",
 					userData && "cursor-pointer",
 				)}
-				onClick={() => booth.boothNumber && handleBoothClick(booth.boothNumber)}
+				onClick={() =>
+					booth.boothNumber &&
+					userData &&
+					handleBoothClick(booth.boothNumber, key)
+				}
 				onKeyDown={(e) => {
-					if ((e.key === "Enter" || e.key === " ") && booth.boothNumber) {
+					if (
+						(e.key === "Enter" || e.key === " ") &&
+						booth.boothNumber &&
+						userData
+					) {
 						e.preventDefault();
-						handleBoothClick(booth.boothNumber);
+						handleBoothClick(booth.boothNumber, key);
 					}
 				}}
 				tabIndex={userData ? 0 : -1}
@@ -159,15 +170,36 @@ const ComiketIsland = ({
 		if (userData) {
 			return (
 				<TooltipProvider key={key}>
-					<Tooltip>
+					<Tooltip
+						open={openTooltip === key}
+						onOpenChange={(open) => !open && setOpenTooltip(null)}
+					>
 						<TooltipTrigger asChild>{cellContent}</TooltipTrigger>
-						<TooltipContent>
-							<p className="font-semibold">
-								{userData.twitterUser.displayName}
-							</p>
-							<p className="text-gray-300 text-xs">
-								@{userData.twitterUser.username}
-							</p>
+						<TooltipContent className="border-gray-700 bg-gray-800 p-3 text-white">
+							<div className="space-y-2">
+								<div>
+									<p className="font-semibold text-white">
+										{userData.twitterUser.displayName}
+									</p>
+									<p className="text-gray-400 text-xs">
+										@{userData.twitterUser.username}
+									</p>
+								</div>
+								<Button
+									size="sm"
+									variant="secondary"
+									className="h-7 w-full bg-white text-gray-900 hover:bg-gray-100"
+									onClick={() => {
+										if (onBoothClick) {
+											onBoothClick(userData);
+										}
+										setOpenTooltip(null);
+									}}
+								>
+									<ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+									ツイートを見る
+								</Button>
+							</div>
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>
