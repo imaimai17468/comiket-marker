@@ -2,22 +2,23 @@
 
 import { AlertCircle, MapPin } from "lucide-react";
 import { useState } from "react";
-import ComiketIsland from "@/components/features/comiket-island/ComiketIsland";
-import WallCircleContainer from "@/components/features/wall-circle/WallCircleContainer";
+import ComiketLayoutMap from "@/components/features/comiket-layout-map/ComiketLayoutMap";
 import { TwitterEmbed } from "@/components/shared/twitter-embed";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { TwitterUser } from "@/entities/twitter-user";
 import { isTwitterError } from "@/gateways/twitter-user";
 import {
-	ALL_BLOCKS_ORDER,
-	normalizeBlockName,
-} from "@/utils/comiket-block-map";
-import {
 	type ComiketInfo,
 	extractComiketInfoList,
-	formatComiketInfo,
 } from "@/utils/comiket-parser";
+import { ComiketInfoCard } from "./ComiketInfoCard";
+import {
+	createHighlightData,
+	formatErrorMessage,
+	shouldShowComiketSection,
+	shouldShowTweetInfo,
+} from "./presenter";
 import { TweetInfoDisplay } from "./TweetInfoDisplay";
 import { TweetUrlForm } from "./TweetUrlForm";
 
@@ -27,27 +28,6 @@ export const TwitterAnalyzer = () => {
 	const [comiketInfoList, setComiketInfoList] = useState<ComiketInfo[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
-
-	// コミケ情報からブロックごとのブース番号を抽出
-	const getHighlightedBoothsByBlock = (
-		infoList: ComiketInfo[],
-	): Record<string, number[]> => {
-		const result: Record<string, number[]> = {};
-		for (const info of infoList) {
-			if (info.block && info.space) {
-				const normalizedBlock = normalizeBlockName(info.block);
-				const match = info.space.match(/\d+/);
-				if (match) {
-					const boothNumber = Number.parseInt(match[0], 10);
-					if (!result[normalizedBlock]) {
-						result[normalizedBlock] = [];
-					}
-					result[normalizedBlock].push(boothNumber);
-				}
-			}
-		}
-		return result;
-	};
 
 	const handleUrlSubmit = async (url: string) => {
 		setIsLoading(true);
@@ -83,9 +63,7 @@ export const TwitterAnalyzer = () => {
 			const infoList = extractComiketInfoList(data.displayName);
 			setComiketInfoList(infoList);
 		} catch (err) {
-			setError(
-				err instanceof Error ? err.message : "予期しないエラーが発生しました",
-			);
+			setError(formatErrorMessage(err));
 			setTweetUrl(null);
 		} finally {
 			setIsLoading(false);
@@ -103,10 +81,10 @@ export const TwitterAnalyzer = () => {
 				</Alert>
 			)}
 
-			{tweetInfo && (
+			{shouldShowTweetInfo(tweetInfo, isLoading, error) && (
 				<div className="space-y-6">
 					<div className="grid gap-6 lg:grid-cols-2">
-						<TweetInfoDisplay tweetInfo={tweetInfo} />
+						<TweetInfoDisplay tweetInfo={tweetInfo as TwitterUser} />
 
 						{tweetUrl && (
 							<div className="space-y-4">
@@ -116,7 +94,7 @@ export const TwitterAnalyzer = () => {
 						)}
 					</div>
 
-					{comiketInfoList.length > 0 && (
+					{shouldShowComiketSection(comiketInfoList) && (
 						<div className="space-y-6">
 							<Card>
 								<CardHeader>
@@ -140,100 +118,15 @@ export const TwitterAnalyzer = () => {
 									<CardTitle>島配置マップ</CardTitle>
 								</CardHeader>
 								<CardContent className="overflow-x-auto">
-									<WallCircleContainer>
-										<div className="inline-flex items-center gap-12 pb-2">
-											{(() => {
-												const highlightedByBlock =
-													getHighlightedBoothsByBlock(comiketInfoList);
-												// 右から（イ側から）: 4, 8, 8, 5, 8, 4個のグループ
-												const groupSizes = [4, 8, 8, 5, 8, 4];
-												let index = 0;
-
-												return groupSizes.map((size, _groupIndex) => {
-													const groupBlocks = ALL_BLOCKS_ORDER.slice(
-														index,
-														index + size,
-													);
-													index += size;
-
-													return (
-														<div
-															key={`group-${groupBlocks[0]}-${groupBlocks[groupBlocks.length - 1]}`}
-															className="inline-flex items-center gap-4"
-														>
-															{groupBlocks.map((block) => (
-																<ComiketIsland
-																	key={block}
-																	block={block}
-																	highlightedBooths={
-																		highlightedByBlock[block] || []
-																	}
-																/>
-															))}
-														</div>
-													);
-												});
-											})()}
-										</div>
-									</WallCircleContainer>
+									<ComiketLayoutMap
+										highlightedBooths={createHighlightData(comiketInfoList)}
+									/>
 								</CardContent>
 							</Card>
 						</div>
 					)}
 				</div>
 			)}
-		</div>
-	);
-};
-
-const ComiketInfoCard = ({ info }: { info: ComiketInfo }) => {
-	const formatted = formatComiketInfo(info);
-
-	return (
-		<div className="space-y-3 rounded-lg bg-secondary/50 p-4">
-			<div className="flex items-center justify-between">
-				<span className="font-bold text-lg">{formatted || "位置情報"}</span>
-			</div>
-
-			<div className="grid grid-cols-2 gap-2 text-sm">
-				{info.date && (
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground">日程:</span>
-						<span className="font-medium">{info.date}</span>
-					</div>
-				)}
-
-				{info.hall && (
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground">ホール:</span>
-						<span className="font-medium">
-							{info.hall}
-							{info.entrance ? info.entrance : ""}
-						</span>
-					</div>
-				)}
-
-				{info.block && (
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground">列:</span>
-						<span className="font-medium">{info.block}</span>
-					</div>
-				)}
-
-				{info.space && (
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground">スペース:</span>
-						<span className="font-medium">{info.space}</span>
-					</div>
-				)}
-
-				{info.side && (
-					<div className="flex items-center gap-2">
-						<span className="text-muted-foreground">サイド:</span>
-						<span className="font-medium">{info.side}</span>
-					</div>
-				)}
-			</div>
 		</div>
 	);
 };
