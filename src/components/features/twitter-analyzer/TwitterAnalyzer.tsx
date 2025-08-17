@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Check, ExternalLink, List, Trash2 } from "lucide-react";
+import { AlertCircle, List, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
@@ -18,24 +18,18 @@ import {
 } from "@/components/ui/sheet";
 import type { TwitterUser } from "@/entities/twitter-user";
 import { isTwitterError } from "@/gateways/twitter-user";
-import { cn } from "@/lib/utils";
 import { useBoothStore } from "@/stores/booth-store";
 import {
 	type ComiketInfo,
 	extractComiketInfoList,
 } from "@/utils/comiket-parser";
 import { createHighlightData, formatErrorMessage } from "./presenter";
+import { SortableBoothList } from "./SortableBoothList";
 import { TweetUrlForm } from "./TweetUrlForm";
 
 export const TwitterAnalyzer = () => {
-	const {
-		boothUserMap,
-		addMultipleBoothUsers,
-		removeBoothUser,
-		clearAllBooths,
-		toggleBoothVisited,
-		isBoothVisited,
-	} = useBoothStore();
+	const { boothUserMap, addMultipleBoothUsers, clearAllBooths } =
+		useBoothStore();
 	const [comiketInfoList, setComiketInfoList] = useState<ComiketInfo[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -48,20 +42,6 @@ export const TwitterAnalyzer = () => {
 		);
 		setComiketInfoList(allInfoList);
 	}, [boothUserMap]);
-
-	// ブース削除ハンドラ
-	const handleRemoveBooth = (key: string) => {
-		if (confirm("このブース情報を削除しますか？")) {
-			removeBoothUser(key);
-			// 削除後の状態を反映
-			const updatedMap = new Map(boothUserMap);
-			updatedMap.delete(key);
-			const allInfoList = Array.from(updatedMap.values()).map(
-				(data) => data.comiketInfo,
-			);
-			setComiketInfoList(allInfoList);
-		}
-	};
 
 	// ブースをクリックしてズーム
 	const handleBoothClick = (userData: BoothUserData) => {
@@ -251,95 +231,7 @@ export const TwitterAnalyzer = () => {
 							</div>
 						)}
 						<div className="mt-2 max-h-[calc(100vh-180px)] overflow-y-auto">
-							<div className="divide-y divide-border/50">
-								{Array.from(boothUserMap.entries()).map(
-									([key, userData], _index) => {
-										const isVisited = isBoothVisited(key);
-										return (
-											<div
-												key={key}
-												className={cn(
-													"group relative cursor-pointer px-4 py-2 transition-colors duration-200 hover:bg-muted/30 sm:px-6",
-													isVisited && "bg-green-50",
-												)}
-												onClick={() => handleBoothClick(userData)}
-												onKeyDown={(e) => {
-													if (e.key === "Enter" || e.key === " ") {
-														handleBoothClick(userData);
-													}
-												}}
-												// biome-ignore lint/a11y/useSemanticElements: ネストしたボタンを避けるため
-												role="button"
-												tabIndex={0}
-											>
-												<div className="space-y-2 pr-24">
-													{/* アカウント情報 */}
-													<div>
-														<p className="font-semibold">
-															{userData.twitterUser.displayName}
-														</p>
-														<p className="text-muted-foreground text-sm">
-															@{userData.twitterUser.username}
-														</p>
-													</div>
-
-													{/* ツイート内容 */}
-													{userData.twitterUser.tweetContent && (
-														<p className="line-clamp-3 text-gray-600 text-sm">
-															{userData.twitterUser.tweetContent}
-														</p>
-													)}
-												</div>
-
-												{/* アクションボタン */}
-												<div className="absolute top-3 right-4 flex gap-1 opacity-100 transition-opacity duration-200 sm:right-6">
-													<Button
-														variant="ghost"
-														size="sm"
-														className={cn(
-															"h-6 w-6 p-0",
-															isVisited
-																? "text-green-600 hover:bg-green-100"
-																: "hover:bg-accent",
-														)}
-														onClick={(e) => {
-															e.stopPropagation();
-															toggleBoothVisited(key);
-														}}
-														aria-label={isVisited ? "訪問済み" : "未訪問"}
-													>
-														<Check className="h-3.5 w-3.5" />
-													</Button>
-													<Button
-														variant="ghost"
-														size="sm"
-														className="h-6 w-6 p-0 hover:bg-accent"
-														onClick={(e) => {
-															e.stopPropagation();
-															window.open(userData.tweetUrl, "_blank");
-														}}
-														aria-label="ツイートを見る"
-													>
-														<ExternalLink className="h-3.5 w-3.5" />
-													</Button>
-													<Button
-														variant="ghost"
-														size="sm"
-														className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
-														onClick={(e) => {
-															e.stopPropagation();
-															handleRemoveBooth(key);
-														}}
-														aria-label="このブースを削除"
-													>
-														<Trash2 className="h-3.5 w-3.5" />
-													</Button>
-												</div>
-											</div>
-										);
-									},
-								)}
-							</div>
+							<SortableBoothList onBoothClick={handleBoothClick} />
 						</div>
 					</SheetContent>
 				</Sheet>

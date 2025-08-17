@@ -43,6 +43,9 @@ const zenKakuGothicNew = localFont({
 });
 
 export const metadata: Metadata = {
+	metadataBase: new URL(
+		process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+	),
 	title: "コミケマーカー - Comiket Marker",
 	description:
 		"コミケのブース位置をTwitter/Xの名前欄から自動抽出して地図上に表示するツール。サークル情報を視覚的に管理できます。",
