@@ -4,15 +4,8 @@ import { Loader2, Search } from "lucide-react";
 import { useId, useState } from "react";
 import { isValidTwitterUrl } from "@/components/shared/twitter-embed";
 import { Button } from "@/components/ui/button";
-import {
-	Card,
-	CardContent,
-	CardDescription,
-	CardHeader,
-	CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 type TweetUrlFormProps = {
 	onSubmit: (url: string) => void;
@@ -45,22 +38,18 @@ export const TweetUrlForm = ({
 	};
 
 	return (
-		<Card>
-			<CardHeader>
-				<CardTitle>ツイート解析</CardTitle>
-				<CardDescription>
-					Twitter/X のツイートURLを入力して、内容を解析します
-				</CardDescription>
+		<Card className="gap-2 bg-white/95 backdrop-blur">
+			<CardHeader className="pb-0">
+				<CardTitle className="text-lg">ツイートからブースを保存</CardTitle>
 			</CardHeader>
-			<CardContent>
-				<form onSubmit={handleSubmit} className="space-y-4">
+			<CardContent className="pt-0">
+				<form onSubmit={handleSubmit} className="space-y-3">
 					<div className="space-y-2">
-						<Label htmlFor={tweetUrlInputId}>ツイートURL</Label>
 						<div className="flex gap-2">
 							<Input
 								id={tweetUrlInputId}
 								type="url"
-								placeholder="https://x.com/username/status/..."
+								placeholder="URLを入力"
 								value={url}
 								onChange={(e) => {
 									setUrl(e.target.value);
@@ -83,6 +72,9 @@ export const TweetUrlForm = ({
 								)}
 							</Button>
 						</div>
+						<p className="text-muted-foreground text-xs">
+							例: https://x.com/username/status/1234567890
+						</p>
 						{error && <p className="text-red-500 text-sm">{error}</p>}
 					</div>
 				</form>
