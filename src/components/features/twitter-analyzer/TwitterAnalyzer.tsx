@@ -214,11 +214,18 @@ export const TwitterAnalyzer = () => {
 							<div className="divide-y divide-border/50">
 								{Array.from(boothUserMap.entries()).map(
 									([key, userData], _index) => (
-										<button
+										<div
 											key={key}
-											type="button"
-											className="group relative w-full cursor-pointer px-6 py-2 text-left transition-colors duration-200 hover:bg-muted/30"
+											className="group relative cursor-pointer px-6 py-2 transition-colors duration-200 hover:bg-muted/30"
 											onClick={() => handleBoothClick(userData)}
+											onKeyDown={(e) => {
+												if (e.key === "Enter" || e.key === " ") {
+													handleBoothClick(userData);
+												}
+											}}
+											// biome-ignore lint/a11y/useSemanticElements: ネストしたボタンを避けるため
+											role="button"
+											tabIndex={0}
 										>
 											<div className="space-y-2 pr-8">
 												{/* アカウント情報 */}
@@ -266,7 +273,7 @@ export const TwitterAnalyzer = () => {
 													<Trash2 className="h-3.5 w-3.5" />
 												</Button>
 											</div>
-										</button>
+										</div>
 									),
 								)}
 							</div>
