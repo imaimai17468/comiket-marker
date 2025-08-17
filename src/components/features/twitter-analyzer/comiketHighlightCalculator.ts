@@ -1,4 +1,5 @@
 import type { BlockHighlights } from "@/components/features/comiket-layout-map/types";
+import { normalizeBlockName } from "@/utils/comiket-block-map";
 import type { ComiketInfo } from "@/utils/comiket-parser";
 
 /**
@@ -13,19 +14,23 @@ export const getHighlightedBoothsByBlock = (
 
 	for (const info of infoList) {
 		if (info.block && info.space) {
-			// ブロック名はそのまま使用（ひらがなはひらがな、カタカナはカタカナのまま）
-			const blockKey = info.block;
+			// ブロック名をカタカナに正規化（実際のデータがカタカナなため）
+			const normalizedBlock = normalizeBlockName(info.block);
 			const match = info.space.match(/\d+/);
 
 			if (match) {
 				const boothNumber = Number.parseInt(match[0], 10);
-				if (!result[blockKey]) {
-					result[blockKey] = [];
+				if (!result[normalizedBlock]) {
+					result[normalizedBlock] = [];
 				}
-				result[blockKey].push(boothNumber);
+				result[normalizedBlock].push(boothNumber);
+				console.log(
+					`Added booth ${boothNumber} to block ${normalizedBlock} (original: ${info.block})`,
+				);
 			}
 		}
 	}
 
+	console.log("Final highlight data:", result);
 	return result;
 };

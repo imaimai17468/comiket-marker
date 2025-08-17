@@ -133,6 +133,10 @@ export const TwitterAnalyzer = () => {
 			);
 			setComiketInfoList(allInfoList);
 
+			// デバッグ: ハイライトデータを確認
+			console.log("Updated comiketInfoList:", allInfoList);
+			console.log("Highlight data:", createHighlightData(allInfoList));
+
 			// 成功通知を表示
 			if (newEntries.length > 0) {
 				toast.success(`${newEntries.length}件のブース情報を追加しました`, {
