@@ -108,7 +108,11 @@ const ComiketIsland = ({
 	};
 
 	// ブースセルのレンダリング
-	const renderBoothCell = (booth: BoothPosition, key: string) => {
+	const renderBoothCell = (
+		booth: BoothPosition,
+		key: string,
+		isLastRowOf48?: boolean,
+	) => {
 		const userData = booth.boothNumber
 			? getBoothUserData(booth.boothNumber)
 			: null;
@@ -134,6 +138,7 @@ const ComiketIsland = ({
 						: "bg-white hover:bg-gray-50",
 					isSelected && "ring-2 ring-blue-500",
 					userData && "cursor-pointer",
+					isLastRowOf48 && "border-b-4",
 				)}
 				onClick={() =>
 					booth.boothNumber &&
@@ -237,12 +242,13 @@ const ComiketIsland = ({
 			<div>
 				<table className="border-separate border-spacing-0 border-2 border-gray-800">
 					<tbody>
-						{lowerLayout.map((row) => (
+						{lowerLayout.map((row, index) => (
 							<tr key={`lower-row-${row[1].boothNumber}`}>
 								{row.map((booth) =>
 									renderBoothCell(
 										booth,
 										`booth-lower-${booth.row}-${booth.column}`,
+										actualBoothCount === 48 && index === lowerLayout.length - 1,
 									),
 								)}
 							</tr>
@@ -250,12 +256,8 @@ const ComiketIsland = ({
 						{/* 48ブースの場合、高さ調整用の透明文字入り行を1行追加 */}
 						{actualBoothCount === 48 && (
 							<tr>
-								<td className="border border-transparent p-2 text-transparent">
-									_
-								</td>
-								<td className="border border-transparent p-2 text-transparent">
-									_
-								</td>
+								<td className="border-0 p-2 text-transparent">_</td>
+								<td className="border-0 p-2 text-transparent">_</td>
 							</tr>
 						)}
 					</tbody>
