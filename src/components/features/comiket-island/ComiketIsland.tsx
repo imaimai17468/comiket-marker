@@ -108,11 +108,7 @@ const ComiketIsland = ({
 	};
 
 	// ブースセルのレンダリング
-	const renderBoothCell = (
-		booth: BoothPosition,
-		key: string,
-		isLastRowOf48?: boolean,
-	) => {
+	const renderBoothCell = (booth: BoothPosition, key: string) => {
 		const userData = booth.boothNumber
 			? getBoothUserData(booth.boothNumber)
 			: null;
@@ -138,7 +134,6 @@ const ComiketIsland = ({
 						: "bg-white hover:bg-gray-50",
 					isSelected && "ring-2 ring-blue-500",
 					userData && "cursor-pointer",
-					isLastRowOf48 && "border-b-4",
 				)}
 				onClick={() =>
 					booth.boothNumber &&
@@ -218,7 +213,7 @@ const ComiketIsland = ({
 		<div className="flex flex-col items-center">
 			{/* 上部 */}
 			<div>
-				<table className="border-separate border-spacing-0 border-2 border-gray-800">
+				<table className="border-separate border-spacing-0">
 					<tbody>
 						{upperLayout.map((row) => (
 							<tr key={`upper-row-${row[1].boothNumber}`}>
@@ -240,15 +235,14 @@ const ComiketIsland = ({
 
 			{/* 下部 */}
 			<div>
-				<table className="border-separate border-spacing-0 border-2 border-gray-800">
+				<table className="border-separate border-spacing-0">
 					<tbody>
-						{lowerLayout.map((row, index) => (
+						{lowerLayout.map((row, _index) => (
 							<tr key={`lower-row-${row[1].boothNumber}`}>
 								{row.map((booth) =>
 									renderBoothCell(
 										booth,
 										`booth-lower-${booth.row}-${booth.column}`,
-										actualBoothCount === 48 && index === lowerLayout.length - 1,
 									),
 								)}
 							</tr>
