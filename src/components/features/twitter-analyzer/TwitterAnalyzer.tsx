@@ -169,7 +169,7 @@ export const TwitterAnalyzer = () => {
 			/>
 
 			{/* ツイート入力フォームを左上に配置 */}
-			<div className="absolute top-0.5 right-0.5 left-0.5 z-20 space-y-0.5 sm:top-1 sm:right-auto sm:left-1 sm:w-96">
+			<div className="absolute top-4 left-4 z-20 space-y-2">
 				{/* リスト表示ボタン */}
 				<Sheet>
 					<SheetTrigger asChild>

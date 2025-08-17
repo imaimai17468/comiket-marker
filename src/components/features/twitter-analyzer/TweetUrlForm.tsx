@@ -38,16 +38,16 @@ export const TweetUrlForm = ({
 	};
 
 	return (
-		<Card className="gap-0 bg-white/95 py-0 backdrop-blur">
-			<CardHeader className="px-2 py-1 sm:px-3 sm:py-1.5">
+		<Card className="gap-1 bg-white/95 py-2 backdrop-blur">
+			<CardHeader>
 				<CardTitle className="text-sm sm:text-base">
 					ツイートからブースを保存
 				</CardTitle>
 			</CardHeader>
-			<CardContent className="px-2 py-1 sm:px-3 sm:py-1.5">
+			<CardContent>
 				<form onSubmit={handleSubmit}>
-					<div>
-						<div className="flex gap-0.5">
+					<div className="space-y-2">
+						<div className="flex gap-2">
 							<Input
 								id={tweetUrlInputId}
 								type="url"
