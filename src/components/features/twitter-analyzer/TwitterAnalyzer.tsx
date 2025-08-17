@@ -61,6 +61,16 @@ export const TwitterAnalyzer = () => {
 		}
 	};
 
+	// ブースをクリックしてズーム
+	const handleBoothClick = (userData: BoothUserData) => {
+		const info = userData.comiketInfo;
+		if (info.block && info.space && mapRef.current) {
+			// ハイライト時と同じように、ひらがなはそのまま、カタカナはそのまま使用
+			console.log("Centering on booth from list:", info.block, info.space);
+			mapRef.current.centerOnBooth(info.block, Number(info.space));
+		}
+	};
+
 	const handleUrlSubmit = async (url: string) => {
 		setIsLoading(true);
 		setError(null);
@@ -204,9 +214,11 @@ export const TwitterAnalyzer = () => {
 							<div className="divide-y divide-border/50">
 								{Array.from(boothUserMap.entries()).map(
 									([key, userData], _index) => (
-										<div
+										<button
 											key={key}
-											className="group relative px-6 py-2 transition-colors duration-200 hover:bg-muted/30"
+											type="button"
+											className="group relative w-full cursor-pointer px-6 py-2 text-left transition-colors duration-200 hover:bg-muted/30"
+											onClick={() => handleBoothClick(userData)}
 										>
 											<div className="space-y-2 pr-8">
 												{/* アカウント情報 */}
@@ -233,9 +245,10 @@ export const TwitterAnalyzer = () => {
 													variant="ghost"
 													size="sm"
 													className="h-6 w-6 p-0 hover:bg-accent"
-													onClick={() =>
-														window.open(userData.tweetUrl, "_blank")
-													}
+													onClick={(e) => {
+														e.stopPropagation();
+														window.open(userData.tweetUrl, "_blank");
+													}}
 													aria-label="ツイートを見る"
 												>
 													<ExternalLink className="h-3.5 w-3.5" />
@@ -244,13 +257,16 @@ export const TwitterAnalyzer = () => {
 													variant="ghost"
 													size="sm"
 													className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
-													onClick={() => handleRemoveBooth(key)}
+													onClick={(e) => {
+														e.stopPropagation();
+														handleRemoveBooth(key);
+													}}
 													aria-label="このブースを削除"
 												>
 													<Trash2 className="h-3.5 w-3.5" />
 												</Button>
 											</div>
-										</div>
+										</button>
 									),
 								)}
 							</div>

@@ -113,9 +113,10 @@ const ComiketIsland = ({
 			booth.boothNumber && highlightedBooths.includes(booth.boothNumber);
 		const isSelected = booth.boothNumber === selectedBooth;
 
-		// IDを生成する際はブロック名を正規化
+		// IDを生成する際はブロック名をそのまま使用（ハイライトに関係なく付与）
+		// ひらがな、カタカナどちらも対応できるように
 		const boothId =
-			isHighlighted && block && booth.boothNumber
+			block && booth.boothNumber
 				? `booth-${block}-${booth.boothNumber}`
 				: undefined;
 
