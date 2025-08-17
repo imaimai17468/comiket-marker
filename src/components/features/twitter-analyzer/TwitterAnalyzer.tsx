@@ -101,13 +101,52 @@ export const TwitterAnalyzer = () => {
 			// displayNameからコミケ位置情報を抽出
 			const infoList = extractComiketInfoList(twitterUser.displayName);
 
+			// 位置情報が全く検出されない場合
+			if (infoList.length === 0) {
+				toast.error("コミケ位置情報が見つかりません", {
+					description:
+						"名前欄に「東あ23」のような形式でブース位置を記載してください。",
+				});
+				setIsLoading(false);
+				return;
+			}
+
+			// 必須情報のチェック
+			const validInfoList = infoList.filter(
+				(info) => info.hall && info.block && info.space,
+			);
+
+			// 不足情報のチェック
+			const incompleteInfoList = infoList.filter(
+				(info) => !info.hall || !info.block || !info.space,
+			);
+
+			// 不足情報がある場合は警告を表示
+			if (incompleteInfoList.length > 0 && validInfoList.length === 0) {
+				const info = incompleteInfoList[0];
+				const missing: string[] = [];
+				if (!info.hall) missing.push("ホール（東/西/南）");
+				if (!info.block) missing.push("ブロック（ひらがな/カタカナ/英字）");
+				if (!info.space) missing.push("スペース番号（2桁の数字）");
+
+				toast.error("コミケ位置情報が不完全です", {
+					description: `${missing.join("、")}が不足しています。名前欄に「東あ23」のような形式で記載してください。`,
+				});
+				setIsLoading(false);
+				return;
+			} else if (incompleteInfoList.length > 0) {
+				// 一部情報は取得できたが、不完全なものがある場合は警告
+				toast.warning("一部のコミケ位置情報が不完全です", {
+					description: `完全な情報のみ登録されました。「東あ23」のような形式で記載してください。`,
+				});
+			}
+
 			// ブースとユーザー情報をマッピング
 			const newEntries: Array<[string, BoothUserData]> = [];
-			for (const info of infoList) {
-				// blockとspaceが両方ある場合のみマッピング
-				if (info.block && info.space) {
-					// hallがない場合は空文字列として扱う
-					const key = `${info.hall || ""}-${info.block}-${info.space}`;
+			for (const info of validInfoList) {
+				// hall, block, spaceが全て揃っている場合のみマッピング
+				if (info.hall && info.block && info.space) {
+					const key = `${info.hall}-${info.block}-${info.space}`;
 					newEntries.push([
 						key,
 						{
