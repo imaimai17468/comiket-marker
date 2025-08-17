@@ -1,10 +1,12 @@
 "use client";
 
 import { AlertCircle, ExternalLink, List, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
-import ZoomableComiketLayoutMap from "@/components/features/comiket-layout-map/ZoomableComiketLayoutMap";
+import ZoomableComiketLayoutMap, {
+	type ZoomableComiketLayoutMapRef,
+} from "@/components/features/comiket-layout-map/ZoomableComiketLayoutMap";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +37,7 @@ export const TwitterAnalyzer = () => {
 	const [comiketInfoList, setComiketInfoList] = useState<ComiketInfo[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const mapRef = useRef<ZoomableComiketLayoutMapRef>(null);
 
 	// 初回マウント時にstoreから既存のコミケ情報リストを復元
 	useEffect(() => {
@@ -125,6 +128,17 @@ export const TwitterAnalyzer = () => {
 				toast.success(`${newEntries.length}件のブース情報を追加しました`, {
 					description: twitterUser.displayName,
 				});
+
+				// 最初のブースにマップを中心移動
+				const firstEntry = newEntries[0];
+				if (firstEntry && mapRef.current) {
+					const info = firstEntry[1].comiketInfo;
+					if (info.block && info.space) {
+						setTimeout(() => {
+							mapRef.current?.centerOnBooth(info.block, Number(info.space));
+						}, 100);
+					}
+				}
 			} else {
 				toast.info("ブース情報が見つかりませんでした");
 			}
@@ -139,6 +153,7 @@ export const TwitterAnalyzer = () => {
 		<div className="relative h-[calc(100vh-72px)] w-full">
 			{/* 地図を画面いっぱいに表示 */}
 			<ZoomableComiketLayoutMap
+				ref={mapRef}
 				highlightedBooths={createHighlightData(comiketInfoList)}
 				boothUserMap={boothUserMap}
 			/>
