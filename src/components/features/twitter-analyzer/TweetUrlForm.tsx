@@ -61,13 +61,13 @@ export const TweetUrlForm = ({
 							<Button type="submit" disabled={isLoading}>
 								{isLoading ? (
 									<>
-										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
-										解析中
+										<Loader2 className="h-4 w-4 animate-spin" />
+										追加中
 									</>
 								) : (
 									<>
-										<Search className="mr-2 h-4 w-4" />
-										解析
+										<Search className="h-4 w-4" />
+										追加
 									</>
 								)}
 							</Button>
