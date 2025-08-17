@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { Header } from "@/components/shared/header/Header";
 import { TwitterScriptLoader } from "@/components/shared/twitter-embed";
 import { Toaster } from "@/components/ui/sonner";
@@ -8,6 +9,37 @@ import { Toaster } from "@/components/ui/sonner";
 const geistMono = Geist_Mono({
 	subsets: ["latin"],
 	variable: "--font-geist-mono",
+});
+
+const zenKakuGothicNew = localFont({
+	src: [
+		{
+			path: "../../public/fonts/ZenKakuGothicNew-Light.ttf",
+			weight: "300",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/ZenKakuGothicNew-Regular.ttf",
+			weight: "400",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/ZenKakuGothicNew-Medium.ttf",
+			weight: "500",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/ZenKakuGothicNew-Bold.ttf",
+			weight: "700",
+			style: "normal",
+		},
+		{
+			path: "../../public/fonts/ZenKakuGothicNew-Black.ttf",
+			weight: "900",
+			style: "normal",
+		},
+	],
+	variable: "--font-zen-kaku-gothic-new",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +54,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="ja">
-			<body className={`antialiased ${geistMono.className}`}>
+			<body
+				className={`antialiased ${geistMono.variable} ${zenKakuGothicNew.variable} ${zenKakuGothicNew.className}`}
+			>
 				<Header />
 				<main className="min-h-screen w-full pt-[72px]">{children}</main>
 				<TwitterScriptLoader />
