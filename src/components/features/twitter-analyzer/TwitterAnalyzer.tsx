@@ -1,7 +1,7 @@
 "use client";
 
-import { AlertCircle, List } from "lucide-react";
-import { useState } from "react";
+import { AlertCircle, List, Trash2, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
 import ZoomableComiketLayoutMap from "@/components/features/comiket-layout-map/ZoomableComiketLayoutMap";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sheet";
 import type { TwitterUser } from "@/entities/twitter-user";
 import { isTwitterError } from "@/gateways/twitter-user";
+import { useBoothStore } from "@/stores/booth-store";
 import {
 	type ComiketInfo,
 	extractComiketInfoList,
@@ -24,12 +25,35 @@ import { createHighlightData, formatErrorMessage } from "./presenter";
 import { TweetUrlForm } from "./TweetUrlForm";
 
 export const TwitterAnalyzer = () => {
-	const [boothUserMap, setBoothUserMap] = useState<Map<string, BoothUserData>>(
-		new Map(),
-	);
+	const {
+		boothUserMap,
+		addMultipleBoothUsers,
+		removeBoothUser,
+		clearAllBooths,
+	} = useBoothStore();
 	const [comiketInfoList, setComiketInfoList] = useState<ComiketInfo[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+
+	// 初回マウント時にstoreから既存のコミケ情報リストを復元
+	useEffect(() => {
+		const allInfoList = Array.from(boothUserMap.values()).map(
+			(data) => data.comiketInfo,
+		);
+		setComiketInfoList(allInfoList);
+	}, [boothUserMap.values]);
+
+	// ブース削除ハンドラ
+	const handleRemoveBooth = (key: string) => {
+		removeBoothUser(key);
+		// 削除後の状態を反映
+		const updatedMap = new Map(boothUserMap);
+		updatedMap.delete(key);
+		const allInfoList = Array.from(updatedMap.values()).map(
+			(data) => data.comiketInfo,
+		);
+		setComiketInfoList(allInfoList);
+	};
 
 	const handleUrlSubmit = async (url: string) => {
 		setIsLoading(true);
@@ -63,23 +87,32 @@ export const TwitterAnalyzer = () => {
 			const infoList = extractComiketInfoList(twitterUser.displayName);
 
 			// ブースとユーザー情報をマッピング
-			const newBoothUserMap = new Map(boothUserMap);
+			const newEntries: Array<[string, BoothUserData]> = [];
 			for (const info of infoList) {
 				// blockとspaceが両方ある場合のみマッピング
 				if (info.block && info.space) {
 					// hallがない場合は空文字列として扱う
 					const key = `${info.hall || ""}-${info.block}-${info.space}`;
-					newBoothUserMap.set(key, {
-						comiketInfo: info,
-						twitterUser,
-						tweetUrl: url,
-					});
+					newEntries.push([
+						key,
+						{
+							comiketInfo: info,
+							twitterUser,
+							tweetUrl: url,
+						},
+					]);
 				}
 			}
-			setBoothUserMap(newBoothUserMap);
 
-			// 全体のコミケ情報リストを更新
-			const allInfoList = Array.from(newBoothUserMap.values()).map(
+			// Zustand storeに保存
+			addMultipleBoothUsers(newEntries);
+
+			// 全体のコミケ情報リストを更新（新しいMapを作成して取得）
+			const updatedMap = new Map(boothUserMap);
+			for (const [key, data] of newEntries) {
+				updatedMap.set(key, data);
+			}
+			const allInfoList = Array.from(updatedMap.values()).map(
 				(data) => data.comiketInfo,
 			);
 			setComiketInfoList(allInfoList);
@@ -114,35 +147,65 @@ export const TwitterAnalyzer = () => {
 					</SheetTrigger>
 					<SheetContent className="w-[400px] sm:w-[540px]">
 						<SheetHeader>
-							<SheetTitle>保存済みブース一覧</SheetTitle>
+							<SheetTitle className="flex items-center justify-between">
+								<span>保存済みブース一覧</span>
+								{boothUserMap.size > 0 && (
+									<Button
+										variant="ghost"
+										size="sm"
+										onClick={() => {
+											if (confirm("すべてのブース情報を削除しますか？")) {
+												clearAllBooths();
+												setComiketInfoList([]);
+											}
+										}}
+										className="text-destructive hover:text-destructive"
+									>
+										<Trash2 className="mr-1 h-4 w-4" />
+										すべて削除
+									</Button>
+								)}
+							</SheetTitle>
 							<SheetDescription>
 								{boothUserMap.size}件のブース情報が保存されています
 							</SheetDescription>
 						</SheetHeader>
 						<div className="mt-6 max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
-							{Array.from(boothUserMap.values()).map((userData, index) => (
-								<div
-									key={`${userData.comiketInfo.block}-${userData.comiketInfo.space}-${index}`}
-									className="space-y-2 rounded-lg border p-4"
-								>
-									{/* アカウント情報 */}
-									<div>
-										<p className="font-semibold">
-											{userData.twitterUser.displayName}
-										</p>
-										<p className="text-muted-foreground text-sm">
-											@{userData.twitterUser.username}
-										</p>
-									</div>
+							{Array.from(boothUserMap.entries()).map(
+								([key, userData], _index) => (
+									<div
+										key={key}
+										className="group relative space-y-2 rounded-lg border p-4 pr-10"
+									>
+										{/* 削除ボタン */}
+										<Button
+											variant="ghost"
+											size="icon"
+											className="absolute top-2 right-2 h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
+											onClick={() => handleRemoveBooth(key)}
+										>
+											<X className="h-4 w-4" />
+										</Button>
 
-									{/* ツイート内容 */}
-									{userData.twitterUser.tweetContent && (
-										<p className="line-clamp-3 text-gray-600 text-sm">
-											{userData.twitterUser.tweetContent}
-										</p>
-									)}
-								</div>
-							))}
+										{/* アカウント情報 */}
+										<div>
+											<p className="font-semibold">
+												{userData.twitterUser.displayName}
+											</p>
+											<p className="text-muted-foreground text-sm">
+												@{userData.twitterUser.username}
+											</p>
+										</div>
+
+										{/* ツイート内容 */}
+										{userData.twitterUser.tweetContent && (
+											<p className="line-clamp-3 text-gray-600 text-sm">
+												{userData.twitterUser.tweetContent}
+											</p>
+										)}
+									</div>
+								),
+							)}
 						</div>
 					</SheetContent>
 				</Sheet>
