@@ -24,13 +24,9 @@ export const getHighlightedBoothsByBlock = (
 					result[normalizedBlock] = [];
 				}
 				result[normalizedBlock].push(boothNumber);
-				console.log(
-					`Added booth ${boothNumber} to block ${normalizedBlock} (original: ${info.block})`,
-				);
 			}
 		}
 	}
 
-	console.log("Final highlight data:", result);
 	return result;
 };
