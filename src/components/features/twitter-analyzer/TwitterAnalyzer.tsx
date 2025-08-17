@@ -45,7 +45,8 @@ export const TwitterAnalyzer = () => {
 			(data) => data.comiketInfo,
 		);
 		setComiketInfoList(allInfoList);
-	}, [boothUserMap.values]);
+		console.log("Restored comiketInfoList from store:", allInfoList);
+	}, [boothUserMap]);
 
 	// ブース削除ハンドラ
 	const handleRemoveBooth = (key: string) => {
@@ -101,6 +102,8 @@ export const TwitterAnalyzer = () => {
 
 			// displayNameからコミケ位置情報を抽出
 			const infoList = extractComiketInfoList(twitterUser.displayName);
+			console.log("Extracted infoList from:", twitterUser.displayName);
+			console.log("InfoList:", infoList);
 
 			// ブースとユーザー情報をマッピング
 			const newEntries: Array<[string, BoothUserData]> = [];
