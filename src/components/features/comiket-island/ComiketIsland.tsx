@@ -113,8 +113,15 @@ const ComiketIsland = ({
 			booth.boothNumber && highlightedBooths.includes(booth.boothNumber);
 		const isSelected = booth.boothNumber === selectedBooth;
 
+		// IDを生成する際はブロック名を正規化
+		const boothId =
+			isHighlighted && block && booth.boothNumber
+				? `booth-${block}-${booth.boothNumber}`
+				: undefined;
+
 		const cellContent = (
 			<td
+				id={boothId}
 				key={key}
 				className={cn(
 					"border border-gray-600 p-2 text-center align-middle transition-colors",
