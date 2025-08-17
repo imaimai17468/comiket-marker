@@ -21,11 +21,9 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="ja">
-			<body className={`dark antialiased ${geistMono.className}`}>
+			<body className={`antialiased ${geistMono.className}`}>
 				<Header />
-				<div className="flex min-h-screen w-full justify-center px-6 md:px-0">
-					<div className="w-full max-w-7xl">{children}</div>
-				</div>
+				<main className="min-h-screen w-full pt-[72px]">{children}</main>
 				<TwitterScriptLoader />
 			</body>
 		</html>
