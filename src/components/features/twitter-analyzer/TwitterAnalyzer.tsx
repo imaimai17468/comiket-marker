@@ -3,6 +3,7 @@
 import { AlertCircle, MapPin } from "lucide-react";
 import { useState } from "react";
 import ComiketIsland from "@/components/features/comiket-island/ComiketIsland";
+import WallCircleContainer from "@/components/features/wall-circle/WallCircleContainer";
 import { TwitterEmbed } from "@/components/shared/twitter-embed";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -139,40 +140,42 @@ export const TwitterAnalyzer = () => {
 									<CardTitle>島配置マップ</CardTitle>
 								</CardHeader>
 								<CardContent className="overflow-x-auto">
-									<div className="inline-flex items-center gap-12 pb-2">
-										{(() => {
-											const highlightedByBlock =
-												getHighlightedBoothsByBlock(comiketInfoList);
-											// 右から（イ側から）: 4, 8, 8, 5, 8, 4個のグループ
-											const groupSizes = [4, 8, 8, 5, 8, 4];
-											let index = 0;
+									<WallCircleContainer>
+										<div className="inline-flex items-center gap-12 pb-2">
+											{(() => {
+												const highlightedByBlock =
+													getHighlightedBoothsByBlock(comiketInfoList);
+												// 右から（イ側から）: 4, 8, 8, 5, 8, 4個のグループ
+												const groupSizes = [4, 8, 8, 5, 8, 4];
+												let index = 0;
 
-											return groupSizes.map((size, _groupIndex) => {
-												const groupBlocks = ALL_BLOCKS_ORDER.slice(
-													index,
-													index + size,
-												);
-												index += size;
+												return groupSizes.map((size, _groupIndex) => {
+													const groupBlocks = ALL_BLOCKS_ORDER.slice(
+														index,
+														index + size,
+													);
+													index += size;
 
-												return (
-													<div
-														key={`group-${groupBlocks[0]}-${groupBlocks[groupBlocks.length - 1]}`}
-														className="inline-flex items-center gap-4"
-													>
-														{groupBlocks.map((block) => (
-															<ComiketIsland
-																key={block}
-																block={block}
-																highlightedBooths={
-																	highlightedByBlock[block] || []
-																}
-															/>
-														))}
-													</div>
-												);
-											});
-										})()}
-									</div>
+													return (
+														<div
+															key={`group-${groupBlocks[0]}-${groupBlocks[groupBlocks.length - 1]}`}
+															className="inline-flex items-center gap-4"
+														>
+															{groupBlocks.map((block) => (
+																<ComiketIsland
+																	key={block}
+																	block={block}
+																	highlightedBooths={
+																		highlightedByBlock[block] || []
+																	}
+																/>
+															))}
+														</div>
+													);
+												});
+											})()}
+										</div>
+									</WallCircleContainer>
 								</CardContent>
 							</Card>
 						</div>
