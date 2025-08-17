@@ -2,6 +2,7 @@
 
 import { AlertCircle, ExternalLink, List, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
 import ZoomableComiketLayoutMap from "@/components/features/comiket-layout-map/ZoomableComiketLayoutMap";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -118,6 +119,15 @@ export const TwitterAnalyzer = () => {
 				(data) => data.comiketInfo,
 			);
 			setComiketInfoList(allInfoList);
+
+			// 成功通知を表示
+			if (newEntries.length > 0) {
+				toast.success(`${newEntries.length}件のブース情報を追加しました`, {
+					description: twitterUser.displayName,
+				});
+			} else {
+				toast.info("ブース情報が見つかりませんでした");
+			}
 		} catch (err) {
 			setError(formatErrorMessage(err));
 		} finally {

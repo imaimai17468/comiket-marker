@@ -3,6 +3,7 @@ import "./globals.css";
 import { Geist_Mono } from "next/font/google";
 import { Header } from "@/components/shared/header/Header";
 import { TwitterScriptLoader } from "@/components/shared/twitter-embed";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistMono = Geist_Mono({
 	subsets: ["latin"],
@@ -25,6 +26,7 @@ export default function RootLayout({
 				<Header />
 				<main className="min-h-screen w-full pt-[72px]">{children}</main>
 				<TwitterScriptLoader />
+				<Toaster />
 			</body>
 		</html>
 	);
