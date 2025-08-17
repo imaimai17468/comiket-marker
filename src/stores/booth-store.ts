@@ -5,6 +5,7 @@ import type { BoothUserData } from "@/components/features/comiket-layout-map/typ
 type BoothStore = {
 	// State
 	boothUserMap: Map<string, BoothUserData>;
+	visitedBooths: Set<string>; // 訪問済みブースのキー
 
 	// Actions
 	addBoothUser: (key: string, data: BoothUserData) => void;
@@ -12,6 +13,9 @@ type BoothStore = {
 	removeBoothUser: (key: string) => void;
 	clearAllBooths: () => void;
 	getBoothUser: (key: string) => BoothUserData | undefined;
+	toggleBoothVisited: (key: string) => void;
+	isBoothVisited: (key: string) => boolean;
+	clearVisitedBooths: () => void;
 };
 
 export const useBoothStore = create<BoothStore>()(
@@ -19,6 +23,7 @@ export const useBoothStore = create<BoothStore>()(
 		(set, get) => ({
 			// Initial state
 			boothUserMap: new Map(),
+			visitedBooths: new Set(),
 
 			// Actions
 			addBoothUser: (key, data) =>
@@ -40,16 +45,40 @@ export const useBoothStore = create<BoothStore>()(
 			removeBoothUser: (key) =>
 				set((state) => {
 					const newMap = new Map(state.boothUserMap);
+					const newVisited = new Set(state.visitedBooths);
 					newMap.delete(key);
-					return { boothUserMap: newMap };
+					newVisited.delete(key); // 削除時に訪問済み状態も削除
+					return { boothUserMap: newMap, visitedBooths: newVisited };
 				}),
 
-			clearAllBooths: () => set(() => ({ boothUserMap: new Map() })),
+			clearAllBooths: () =>
+				set(() => ({
+					boothUserMap: new Map(),
+					visitedBooths: new Set(),
+				})),
 
 			getBoothUser: (key) => {
 				const state = get();
 				return state.boothUserMap.get(key);
 			},
+
+			toggleBoothVisited: (key) =>
+				set((state) => {
+					const newVisited = new Set(state.visitedBooths);
+					if (newVisited.has(key)) {
+						newVisited.delete(key);
+					} else {
+						newVisited.add(key);
+					}
+					return { visitedBooths: newVisited };
+				}),
+
+			isBoothVisited: (key) => {
+				const state = get();
+				return state.visitedBooths.has(key);
+			},
+
+			clearVisitedBooths: () => set(() => ({ visitedBooths: new Set() })),
 		}),
 		{
 			name: "comiket-booth-storage", // localStorage内のキー名
@@ -58,22 +87,24 @@ export const useBoothStore = create<BoothStore>()(
 					const str = localStorage.getItem(name);
 					if (!str) return null;
 					const parsed = JSON.parse(str);
-					// MapをJSONから復元
+					// MapとSetをJSONから復元
 					return {
 						...parsed,
 						state: {
 							...parsed.state,
 							boothUserMap: new Map(parsed.state.boothUserMap),
+							visitedBooths: new Set(parsed.state.visitedBooths || []),
 						},
 					};
 				},
 				setItem: (name, value) => {
-					// MapをJSONに変換
+					// MapとSetをJSONに変換
 					const stringified = JSON.stringify({
 						...value,
 						state: {
 							...value.state,
 							boothUserMap: Array.from(value.state.boothUserMap.entries()),
+							visitedBooths: Array.from(value.state.visitedBooths),
 						},
 					});
 					localStorage.setItem(name, stringified);

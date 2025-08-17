@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { Check, ExternalLink } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,6 +10,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useBoothStore } from "@/stores/booth-store";
 import { getBlockInfo } from "@/utils/comiket-block-map";
 import type { BoothPosition, ComiketIslandProps } from "./types";
 
@@ -22,6 +23,7 @@ const ComiketIsland = ({
 }: ComiketIslandProps) => {
 	const [selectedBooth, setSelectedBooth] = useState<number | null>(null);
 	const [openTooltip, setOpenTooltip] = useState<string | null>(null);
+	const { toggleBoothVisited, isBoothVisited } = useBoothStore();
 	// ブロック名が指定されている場合はブロック情報から取得
 	const actualBoothCount = (() => {
 		if (block) {
@@ -116,6 +118,13 @@ const ComiketIsland = ({
 			booth.boothNumber && highlightedBooths.includes(booth.boothNumber);
 		const isSelected = booth.boothNumber === selectedBooth;
 
+		// 訪問済みチェック用のキー
+		const boothKey =
+			block && booth.boothNumber && userData
+				? `${userData.comiketInfo.hall}-${block}-${booth.boothNumber}`
+				: null;
+		const isVisited = boothKey ? isBoothVisited(boothKey) : false;
+
 		// IDを生成する際はブロック名をそのまま使用（ハイライトに関係なく付与）
 		// ひらがな、カタカナどちらも対応できるように
 		const boothId =
@@ -129,9 +138,11 @@ const ComiketIsland = ({
 				key={key}
 				className={cn(
 					"border border-gray-600 p-2 text-center align-middle transition-colors",
-					isHighlighted
-						? "bg-yellow-300 hover:bg-yellow-400"
-						: "bg-white hover:bg-gray-50",
+					isVisited
+						? "bg-green-300 hover:bg-green-400"
+						: isHighlighted
+							? "bg-yellow-300 hover:bg-yellow-400"
+							: "bg-white hover:bg-gray-50",
 					isSelected && "ring-2 ring-blue-500",
 					userData && "cursor-pointer",
 				)}
@@ -185,20 +196,41 @@ const ComiketIsland = ({
 										@{userData.twitterUser.username}
 									</p>
 								</div>
-								<Button
-									size="sm"
-									variant="secondary"
-									className="h-7 w-full bg-white text-gray-900 hover:bg-gray-100"
-									onClick={() => {
-										if (onBoothClick) {
-											onBoothClick(userData);
-										}
-										setOpenTooltip(null);
-									}}
-								>
-									<ExternalLink className="mr-1.5 h-3.5 w-3.5" />
-									ツイートを見る
-								</Button>
+								<div className="flex gap-2">
+									<Button
+										size="sm"
+										variant="secondary"
+										className="h-7 flex-1 bg-white text-gray-900 hover:bg-gray-100"
+										onClick={() => {
+											if (onBoothClick) {
+												onBoothClick(userData);
+											}
+											setOpenTooltip(null);
+										}}
+									>
+										<ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+										ツイート
+									</Button>
+									<Button
+										size="sm"
+										variant={isVisited ? "default" : "outline"}
+										className={cn(
+											"h-7 px-2",
+											isVisited
+												? "bg-green-600 text-white hover:bg-green-700"
+												: "border-gray-600 bg-white text-gray-900 hover:bg-gray-100",
+										)}
+										onClick={(e) => {
+											e.stopPropagation();
+											if (boothKey) {
+												toggleBoothVisited(boothKey);
+											}
+										}}
+										title={isVisited ? "訪問済み" : "未訪問"}
+									>
+										<Check className="h-3.5 w-3.5" />
+									</Button>
+								</div>
 							</div>
 						</TooltipContent>
 					</Tooltip>
