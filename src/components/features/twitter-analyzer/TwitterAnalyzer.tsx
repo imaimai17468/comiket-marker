@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, List, Trash2, X } from "lucide-react";
+import { AlertCircle, ExternalLink, List, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
 import ZoomableComiketLayoutMap from "@/components/features/comiket-layout-map/ZoomableComiketLayoutMap";
@@ -45,14 +45,16 @@ export const TwitterAnalyzer = () => {
 
 	// ブース削除ハンドラ
 	const handleRemoveBooth = (key: string) => {
-		removeBoothUser(key);
-		// 削除後の状態を反映
-		const updatedMap = new Map(boothUserMap);
-		updatedMap.delete(key);
-		const allInfoList = Array.from(updatedMap.values()).map(
-			(data) => data.comiketInfo,
-		);
-		setComiketInfoList(allInfoList);
+		if (confirm("このブース情報を削除しますか？")) {
+			removeBoothUser(key);
+			// 削除後の状態を反映
+			const updatedMap = new Map(boothUserMap);
+			updatedMap.delete(key);
+			const allInfoList = Array.from(updatedMap.values()).map(
+				(data) => data.comiketInfo,
+			);
+			setComiketInfoList(allInfoList);
+		}
 	};
 
 	const handleUrlSubmit = async (url: string) => {
@@ -147,65 +149,86 @@ export const TwitterAnalyzer = () => {
 					</SheetTrigger>
 					<SheetContent className="w-[400px] sm:w-[540px]">
 						<SheetHeader>
-							<SheetTitle className="flex items-center justify-between">
-								<span>保存済みブース一覧</span>
-								{boothUserMap.size > 0 && (
-									<Button
-										variant="ghost"
-										size="sm"
-										onClick={() => {
-											if (confirm("すべてのブース情報を削除しますか？")) {
-												clearAllBooths();
-												setComiketInfoList([]);
-											}
-										}}
-										className="text-destructive hover:text-destructive"
-									>
-										<Trash2 className="mr-1 h-4 w-4" />
-										すべて削除
-									</Button>
-								)}
-							</SheetTitle>
+							<SheetTitle>保存済みブース一覧</SheetTitle>
 							<SheetDescription>
 								{boothUserMap.size}件のブース情報が保存されています
 							</SheetDescription>
 						</SheetHeader>
-						<div className="mt-6 max-h-[calc(100vh-200px)] space-y-4 overflow-y-auto">
-							{Array.from(boothUserMap.entries()).map(
-								([key, userData], _index) => (
-									<div
-										key={key}
-										className="group relative space-y-2 rounded-lg border p-4 pr-10"
-									>
-										{/* 削除ボタン */}
-										<Button
-											variant="ghost"
-											size="icon"
-											className="absolute top-2 right-2 h-8 w-8 opacity-0 transition-opacity group-hover:opacity-100"
-											onClick={() => handleRemoveBooth(key)}
+						{boothUserMap.size > 0 && (
+							<div className="flex items-center justify-between px-6">
+								<div className="text-muted-foreground text-xs">
+									合計 {boothUserMap.size} 件
+								</div>
+								<Button
+									variant="ghost"
+									size="sm"
+									onClick={() => {
+										if (confirm("すべてのブース情報を削除しますか？")) {
+											clearAllBooths();
+											setComiketInfoList([]);
+										}
+									}}
+									className="h-7 text-destructive text-xs hover:bg-destructive/10 hover:text-destructive"
+								>
+									<Trash2 className="mr-1.5 h-3.5 w-3.5" />
+									すべて削除
+								</Button>
+							</div>
+						)}
+						<div className="mt-2 max-h-[calc(100vh-180px)] overflow-y-auto">
+							<div className="divide-y divide-border/50">
+								{Array.from(boothUserMap.entries()).map(
+									([key, userData], _index) => (
+										<div
+											key={key}
+											className="group relative px-6 py-2 transition-colors duration-200 hover:bg-muted/30"
 										>
-											<X className="h-4 w-4" />
-										</Button>
+											<div className="space-y-2 pr-8">
+												{/* アカウント情報 */}
+												<div>
+													<p className="font-semibold">
+														{userData.twitterUser.displayName}
+													</p>
+													<p className="text-muted-foreground text-sm">
+														@{userData.twitterUser.username}
+													</p>
+												</div>
 
-										{/* アカウント情報 */}
-										<div>
-											<p className="font-semibold">
-												{userData.twitterUser.displayName}
-											</p>
-											<p className="text-muted-foreground text-sm">
-												@{userData.twitterUser.username}
-											</p>
+												{/* ツイート内容 */}
+												{userData.twitterUser.tweetContent && (
+													<p className="line-clamp-3 text-gray-600 text-sm">
+														{userData.twitterUser.tweetContent}
+													</p>
+												)}
+											</div>
+
+											{/* アクションボタン */}
+											<div className="absolute top-3 right-6 flex gap-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-6 w-6 p-0 hover:bg-accent"
+													onClick={() =>
+														window.open(userData.tweetUrl, "_blank")
+													}
+													aria-label="ツイートを見る"
+												>
+													<ExternalLink className="h-3.5 w-3.5" />
+												</Button>
+												<Button
+													variant="ghost"
+													size="sm"
+													className="h-6 w-6 p-0 hover:bg-destructive/20 hover:text-destructive"
+													onClick={() => handleRemoveBooth(key)}
+													aria-label="このブースを削除"
+												>
+													<Trash2 className="h-3.5 w-3.5" />
+												</Button>
+											</div>
 										</div>
-
-										{/* ツイート内容 */}
-										{userData.twitterUser.tweetContent && (
-											<p className="line-clamp-3 text-gray-600 text-sm">
-												{userData.twitterUser.tweetContent}
-											</p>
-										)}
-									</div>
-								),
-							)}
+									),
+								)}
+							</div>
 						</div>
 					</SheetContent>
 				</Sheet>
