@@ -159,7 +159,11 @@ const ZoomableComiketLayoutMap = forwardRef<
 					}}
 				>
 					<div className="inline-block bg-white p-8">
-						<WallCircleContainer>
+						<WallCircleContainer
+							highlightedBooths={highlightedBooths.ア || []}
+							boothUserMap={boothUserMap}
+							onBoothClick={handleBoothClick}
+						>
 							<div className="inline-flex items-center gap-12 pb-2">
 								{renderIslandGroups()}
 							</div>

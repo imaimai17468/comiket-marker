@@ -1,7 +1,11 @@
+import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
 import WallCircle from "./WallCircle";
 
 type WallCircleContainerProps = {
 	children: React.ReactNode;
+	highlightedBooths?: number[];
+	boothUserMap?: Map<string, BoothUserData>;
+	onBoothClick?: (userData: BoothUserData) => void;
 };
 
 /**
@@ -9,7 +13,12 @@ type WallCircleContainerProps = {
  * 左、上、右に壁サークルを配置し、中央に島配置を表示
  * 番号は右→上→左の順に継承
  */
-const WallCircleContainer = ({ children }: WallCircleContainerProps) => {
+const WallCircleContainer = ({
+	children,
+	highlightedBooths = [],
+	boothUserMap,
+	onBoothClick,
+}: WallCircleContainerProps) => {
 	// 右側の壁サークル配置（下から順に3, 3, 4, 4, 3, 3、下から1が開始）
 	let currentNumber = 1;
 	const rightWallGroups = [
@@ -96,6 +105,9 @@ const WallCircleContainer = ({ children }: WallCircleContainerProps) => {
 							startNumber={group.startNumber}
 							orientation="horizontal"
 							reverse={true}
+							highlightedBooths={highlightedBooths}
+							boothUserMap={boothUserMap}
+							onBoothClick={onBoothClick}
 						/>
 					))}
 				</div>
@@ -110,6 +122,9 @@ const WallCircleContainer = ({ children }: WallCircleContainerProps) => {
 							count={group.count}
 							startNumber={group.startNumber}
 							orientation="vertical"
+							highlightedBooths={highlightedBooths}
+							boothUserMap={boothUserMap}
+							onBoothClick={onBoothClick}
 						/>
 					))}
 				</div>
@@ -127,6 +142,9 @@ const WallCircleContainer = ({ children }: WallCircleContainerProps) => {
 							orientation="vertical"
 							reverse={true}
 							strikethrough={group.strikethrough}
+							highlightedBooths={highlightedBooths}
+							boothUserMap={boothUserMap}
+							onBoothClick={onBoothClick}
 						/>
 					))}
 				</div>
