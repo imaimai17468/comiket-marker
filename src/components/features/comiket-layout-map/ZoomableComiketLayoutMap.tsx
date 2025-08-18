@@ -26,8 +26,9 @@ const ZoomableComiketLayoutMap = forwardRef<
 >(({ highlightedBooths, boothUserMap }, ref) => {
 	const transformRef = useRef<ReactZoomPanPinchRef>(null);
 
-	// 右から（イ側から）: 4, 8, 8, 5, 8, 4個のグループ
-	const groupSizes = [4, 8, 8, 5, 8, 4];
+	// 右から（イ側から）: 4, 8, 5, 8, 8, 4個のグループ
+	// ニとナの間が境目になるように調整
+	const groupSizes = [4, 8, 5, 8, 8, 4];
 
 	const handleBoothClick = (userData: BoothUserData) => {
 		// ツイートを新しいタブで開く

@@ -67,14 +67,38 @@ const ComiketIsland = ({
 	// 全体のレイアウトを作成
 	const fullLayout = createBoothLayout(actualBoothCount);
 
-	// 上部と下部に分割するための行数を計算（下部が同じか多くなるように）
-	const totalRows = fullLayout.length;
-	const upperRows = Math.floor(totalRows / 2);
-	const _lowerRows = totalRows - upperRows;
+	// ブース数に応じて分割方法を決定
+	const shouldSplitInFour = actualBoothCount >= 48; // 48ブース以上は4分割
 
-	// レイアウトを上下に分割
-	const upperLayout = fullLayout.slice(0, upperRows);
-	const lowerLayout = fullLayout.slice(upperRows);
+	// 分割のための計算
+	const totalRows = fullLayout.length;
+	let upperTopLayout: typeof fullLayout = [];
+	let upperBottomLayout: typeof fullLayout = [];
+	let lowerTopLayout: typeof fullLayout = [];
+	let lowerBottomLayout: typeof fullLayout = [];
+
+	if (shouldSplitInFour) {
+		// 4等分する場合
+		const upperRows = Math.floor(totalRows / 2);
+
+		// 上部をさらに分割
+		const upperTopRows = Math.floor(upperRows / 2);
+
+		// 下部をさらに分割
+		const lowerTopRows = Math.floor((totalRows - upperRows) / 2);
+
+		// レイアウトを4つに分割
+		upperTopLayout = fullLayout.slice(0, upperTopRows);
+		upperBottomLayout = fullLayout.slice(upperTopRows, upperRows);
+		lowerTopLayout = fullLayout.slice(upperRows, upperRows + lowerTopRows);
+		lowerBottomLayout = fullLayout.slice(upperRows + lowerTopRows);
+	} else {
+		// 2等分する場合（従来通り）
+		const upperRows = Math.floor(totalRows / 2);
+
+		upperTopLayout = fullLayout.slice(0, upperRows);
+		lowerBottomLayout = fullLayout.slice(upperRows);
+	}
 
 	// ブースに関連するユーザー情報を取得
 	const getBoothUserData = (boothNumber: number) => {
@@ -243,52 +267,167 @@ const ComiketIsland = ({
 
 	return (
 		<div className="flex flex-col items-center">
-			{/* 上部 */}
-			<div>
-				<table className="border-separate border-spacing-0">
-					<tbody>
-						{upperLayout.map((row) => (
-							<tr key={`upper-row-${row[1].boothNumber}`}>
-								{row.map((booth) =>
-									renderBoothCell(booth, `booth-${booth.row}-${booth.column}`),
-								)}
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+			{shouldSplitInFour ? (
+				<>
+					{/* 4分割の場合 */}
+					{/* 上部上段 */}
+					{upperTopLayout.length > 0 && (
+						<div>
+							<table className="border-separate border-spacing-0">
+								<tbody>
+									{upperTopLayout.map((row) => (
+										<tr key={`upper-top-row-${row[1].boothNumber}`}>
+											{row.map((booth) =>
+												renderBoothCell(
+													booth,
+													`booth-ut-${booth.row}-${booth.column}`,
+												),
+											)}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
 
-			{/* ブロック名 */}
-			<div className="flex items-center justify-center py-1">
-				<span className="font-bold text-sm">
-					{block ? getBlockInfo(block)?.block || block : ""}
-				</span>
-			</div>
+					{/* 上部上段と下段の間にスペース */}
+					{upperTopLayout.length > 0 && upperBottomLayout.length > 0 && (
+						<div className="h-2" />
+					)}
 
-			{/* 下部 */}
-			<div>
-				<table className="border-separate border-spacing-0">
-					<tbody>
-						{lowerLayout.map((row, _index) => (
-							<tr key={`lower-row-${row[1].boothNumber}`}>
-								{row.map((booth) =>
-									renderBoothCell(
-										booth,
-										`booth-lower-${booth.row}-${booth.column}`,
-									),
+					{/* 上部下段 */}
+					{upperBottomLayout.length > 0 && (
+						<div>
+							<table className="border-separate border-spacing-0">
+								<tbody>
+									{upperBottomLayout.map((row) => (
+										<tr key={`upper-bottom-row-${row[1].boothNumber}`}>
+											{row.map((booth) =>
+												renderBoothCell(
+													booth,
+													`booth-ub-${booth.row}-${booth.column}`,
+												),
+											)}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+
+					{/* ブロック名 */}
+					<div className="flex items-center justify-center py-1">
+						<span className="font-bold text-sm">
+							{block ? getBlockInfo(block)?.block || block : ""}
+						</span>
+					</div>
+
+					{/* 下部上段 */}
+					{lowerTopLayout.length > 0 && (
+						<div>
+							<table className="border-separate border-spacing-0">
+								<tbody>
+									{lowerTopLayout.map((row) => (
+										<tr key={`lower-top-row-${row[1].boothNumber}`}>
+											{row.map((booth) =>
+												renderBoothCell(
+													booth,
+													`booth-lt-${booth.row}-${booth.column}`,
+												),
+											)}
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					)}
+
+					{/* 下部上段と下段の間にスペース */}
+					{lowerTopLayout.length > 0 && lowerBottomLayout.length > 0 && (
+						<div className="h-2" />
+					)}
+
+					{/* 下部下段 */}
+					{lowerBottomLayout.length > 0 && (
+						<div>
+							<table className="border-separate border-spacing-0">
+								<tbody>
+									{lowerBottomLayout.map((row) => (
+										<tr key={`lower-bottom-row-${row[1].boothNumber}`}>
+											{row.map((booth) =>
+												renderBoothCell(
+													booth,
+													`booth-lb-${booth.row}-${booth.column}`,
+												),
+											)}
+										</tr>
+									))}
+									{/* 48ブースの場合、高さ調整用の透明文字入り行を1行追加 */}
+									{actualBoothCount === 48 && (
+										<tr>
+											<td className="border-0 p-2 text-transparent">_</td>
+											<td className="border-0 p-2 text-transparent">_</td>
+										</tr>
+									)}
+								</tbody>
+							</table>
+						</div>
+					)}
+				</>
+			) : (
+				<>
+					{/* 2分割の場合（従来通り） */}
+					{/* 上部 */}
+					<div>
+						<table className="border-separate border-spacing-0">
+							<tbody>
+								{upperTopLayout.map((row) => (
+									<tr key={`upper-row-${row[1].boothNumber}`}>
+										{row.map((booth) =>
+											renderBoothCell(
+												booth,
+												`booth-${booth.row}-${booth.column}`,
+											),
+										)}
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+
+					{/* ブロック名 */}
+					<div className="flex items-center justify-center py-1">
+						<span className="font-bold text-sm">
+							{block ? getBlockInfo(block)?.block || block : ""}
+						</span>
+					</div>
+
+					{/* 下部 */}
+					<div>
+						<table className="border-separate border-spacing-0">
+							<tbody>
+								{lowerBottomLayout.map((row, _index) => (
+									<tr key={`lower-row-${row[1].boothNumber}`}>
+										{row.map((booth) =>
+											renderBoothCell(
+												booth,
+												`booth-lower-${booth.row}-${booth.column}`,
+											),
+										)}
+									</tr>
+								))}
+								{/* 48ブースの場合、高さ調整用の透明文字入り行を1行追加 */}
+								{actualBoothCount === 48 && (
+									<tr>
+										<td className="border-0 p-2 text-transparent">_</td>
+										<td className="border-0 p-2 text-transparent">_</td>
+									</tr>
 								)}
-							</tr>
-						))}
-						{/* 48ブースの場合、高さ調整用の透明文字入り行を1行追加 */}
-						{actualBoothCount === 48 && (
-							<tr>
-								<td className="border-0 p-2 text-transparent">_</td>
-								<td className="border-0 p-2 text-transparent">_</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
+							</tbody>
+						</table>
+					</div>
+				</>
+			)}
 		</div>
 	);
 };
