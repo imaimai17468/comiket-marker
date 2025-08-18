@@ -107,6 +107,27 @@ describe("extractComiketInfoList", () => {
 		}
 	});
 
+	it("曜日記号（㈰㈯㈮など）を正しく認識する", () => {
+		const testCases = [
+			{ input: "すいみゃ🍉C106㈰東ア-85ab", expectedDate: "日曜" },
+			{ input: "テスト㈯西1あ-23a", expectedDate: "土曜" },
+			{ input: "C106㈮南ｐ-29ab", expectedDate: "金曜" },
+			{ input: "コミケ㈪東5ニ24", expectedDate: "月曜" },
+			{ input: "サークル㈫西め-21b", expectedDate: "火曜" },
+			{ input: "㈬東r-01a", expectedDate: "水曜" },
+			{ input: "㈭南a-42", expectedDate: "木曜" },
+		];
+
+		for (const testCase of testCases) {
+			const result = extractComiketInfoList(testCase.input);
+			expect(result).toHaveLength(1);
+			expect(result[0].date).toBe(testCase.expectedDate);
+			// ブース情報も正しく抽出されることを確認
+			expect(result[0].hall).toBeDefined();
+			expect(result[0].space).toBeDefined();
+		}
+	});
+
 	it("全角英字のブロックを半角に変換", () => {
 		const testCases = [
 			{ input: "Riko@C106(土)南ｐ-29ab", expectedBlock: "p" },

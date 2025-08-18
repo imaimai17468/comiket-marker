@@ -41,6 +41,14 @@ const extractSingleComiketInfo = (text: string): ComiketInfo => {
 
 	// 日付の抽出
 	const datePatterns = [
+		// 曜日記号形式（㈰㈯㈮など）を最優先
+		{ pattern: /㈰/g, value: "日曜" },
+		{ pattern: /㈯/g, value: "土曜" },
+		{ pattern: /㈮/g, value: "金曜" },
+		{ pattern: /㈪/g, value: "月曜" },
+		{ pattern: /㈫/g, value: "火曜" },
+		{ pattern: /㈬/g, value: "水曜" },
+		{ pattern: /㈭/g, value: "木曜" },
 		// 日目形式（優先度高）
 		{
 			pattern: /([1-3１-３])日目/g,

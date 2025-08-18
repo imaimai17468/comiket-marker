@@ -23,6 +23,7 @@ import {
 	type ComiketInfo,
 	extractComiketInfoList,
 } from "@/utils/comiket-parser";
+import { ManualBoothForm } from "./ManualBoothForm";
 import { createHighlightData, formatErrorMessage } from "./presenter";
 import { SortableBoothList } from "./SortableBoothList";
 import { TweetUrlForm } from "./TweetUrlForm";
@@ -33,6 +34,13 @@ export const TwitterAnalyzer = () => {
 	const [comiketInfoList, setComiketInfoList] = useState<ComiketInfo[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [showManualForm, setShowManualForm] = useState(false);
+	const [pendingTwitterUser, setPendingTwitterUser] =
+		useState<TwitterUser | null>(null);
+	const [pendingTweetUrl, setPendingTweetUrl] = useState<string>("");
+	const [parsedPartialInfo, setParsedPartialInfo] = useState<
+		Partial<ComiketInfo> | undefined
+	>();
 	const mapRef = useRef<ZoomableComiketLayoutMapRef>(null);
 
 	// 初回マウント時にstoreから既存のコミケ情報リストを復元
@@ -84,11 +92,19 @@ export const TwitterAnalyzer = () => {
 			// displayNameからコミケ位置情報を抽出
 			const infoList = extractComiketInfoList(twitterUser.displayName);
 
-			// 位置情報が全く検出されない場合
+			// 位置情報が全く検出されない、または不完全な場合
 			if (infoList.length === 0) {
-				toast.error("コミケ位置情報が見つかりません", {
-					description:
-						"名前欄に「東あ23」のような形式でブース位置を記載してください。",
+				// 手動入力フォームを表示
+				setPendingTwitterUser(twitterUser);
+				setPendingTweetUrl(url);
+				setParsedPartialInfo(undefined);
+				setShowManualForm(true);
+				toast.warning("コミケ位置情報が見つかりません", {
+					description: "手動でブース情報を入力してください。",
+					action: {
+						label: "手動入力",
+						onClick: () => {},
+					},
 				});
 				setIsLoading(false);
 				return;
@@ -104,16 +120,22 @@ export const TwitterAnalyzer = () => {
 				(info) => !info.hall || !info.block || !info.space,
 			);
 
-			// 不足情報がある場合は警告を表示
+			// 不足情報がある場合は手動入力フォームを表示
 			if (incompleteInfoList.length > 0 && validInfoList.length === 0) {
 				const info = incompleteInfoList[0];
-				const missing: string[] = [];
-				if (!info.hall) missing.push("ホール（東/西/南）");
-				if (!info.block) missing.push("ブロック（ひらがな/カタカナ/英字）");
-				if (!info.space) missing.push("スペース番号（2桁の数字）");
+				// 部分的にパースできた情報を保持
+				setPendingTwitterUser(twitterUser);
+				setPendingTweetUrl(url);
+				setParsedPartialInfo(info);
+				setShowManualForm(true);
 
-				toast.error("コミケ位置情報が不完全です", {
-					description: `${missing.join("、")}が不足しています。名前欄に「東あ23」のような形式で記載してください。`,
+				const missing: string[] = [];
+				if (!info.hall) missing.push("ホール");
+				if (!info.block) missing.push("ブロック");
+				if (!info.space) missing.push("スペース番号");
+
+				toast.warning("コミケ位置情報が不完全です", {
+					description: `${missing.join("、")}が不足しています。手動で入力してください。`,
 				});
 				setIsLoading(false);
 				return;
@@ -182,6 +204,66 @@ export const TwitterAnalyzer = () => {
 		}
 	};
 
+	// 手動入力フォームの送信処理
+	const handleManualSubmit = (manualInfo: ComiketInfo) => {
+		if (!pendingTwitterUser || !pendingTweetUrl) {
+			return;
+		}
+
+		// 手動入力したブース情報を使用してマッピング
+		const key = `${manualInfo.hall}-${manualInfo.block}-${manualInfo.space}`;
+		const newEntry: [string, BoothUserData] = [
+			key,
+			{
+				comiketInfo: manualInfo,
+				twitterUser: pendingTwitterUser,
+				tweetUrl: pendingTweetUrl,
+			},
+		];
+
+		// Zustand storeに保存
+		addMultipleBoothUsers([newEntry]);
+
+		// 全体のコミケ情報リストを更新
+		const updatedMap = new Map(boothUserMap);
+		updatedMap.set(key, newEntry[1]);
+		const allInfoList = Array.from(updatedMap.values()).map(
+			(data) => data.comiketInfo,
+		);
+		setComiketInfoList(allInfoList);
+
+		// 成功通知を表示
+		toast.success("ブース情報を手動で追加しました", {
+			description: pendingTwitterUser.displayName,
+		});
+
+		// マップを中心移動
+		if (mapRef.current && manualInfo.block && manualInfo.space) {
+			setTimeout(() => {
+				if (manualInfo.block && manualInfo.space) {
+					mapRef.current?.centerOnBooth(
+						manualInfo.block,
+						Number(manualInfo.space),
+					);
+				}
+			}, 100);
+		}
+
+		// フォームをリセット
+		setShowManualForm(false);
+		setPendingTwitterUser(null);
+		setPendingTweetUrl("");
+		setParsedPartialInfo(undefined);
+	};
+
+	// 手動入力フォームのキャンセル処理
+	const handleManualCancel = () => {
+		setShowManualForm(false);
+		setPendingTwitterUser(null);
+		setPendingTweetUrl("");
+		setParsedPartialInfo(undefined);
+	};
+
 	return (
 		<div className="relative h-[calc(100vh-72px)] w-full">
 			{/* 地図を画面いっぱいに表示 */}
@@ -201,7 +283,7 @@ export const TwitterAnalyzer = () => {
 							className="w-full bg-white/95 backdrop-blur"
 							disabled={boothUserMap.size === 0}
 						>
-							<List className="mr-2 h-4 w-4" />
+							<List className="h-4 w-4" />
 							リストを表示 ({boothUserMap.size}件)
 						</Button>
 					</SheetTrigger>
@@ -243,6 +325,16 @@ export const TwitterAnalyzer = () => {
 						<AlertCircle className="h-4 w-4" />
 						<AlertDescription>{error}</AlertDescription>
 					</Alert>
+				)}
+
+				{/* 手動入力フォーム */}
+				{showManualForm && pendingTwitterUser && (
+					<ManualBoothForm
+						twitterUser={pendingTwitterUser}
+						parsedInfo={parsedPartialInfo}
+						onSubmit={handleManualSubmit}
+						onCancel={handleManualCancel}
+					/>
 				)}
 			</div>
 		</div>
