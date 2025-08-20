@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, List, Trash2 } from "lucide-react";
+import { AlertCircle, Calendar, List, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
@@ -16,6 +16,7 @@ import {
 	SheetTitle,
 	SheetTrigger,
 } from "@/components/ui/sheet";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { TwitterUser } from "@/entities/twitter-user";
 import { isTwitterError } from "@/gateways/twitter-user";
 import { useBoothStore } from "@/stores/booth-store";
@@ -41,6 +42,9 @@ export const TwitterAnalyzer = () => {
 	const [parsedPartialInfo, setParsedPartialInfo] = useState<
 		Partial<ComiketInfo> | undefined
 	>();
+	const [selectedDay, setSelectedDay] = useState<"all" | "day1" | "day2">(
+		"all",
+	);
 	const mapRef = useRef<ZoomableComiketLayoutMapRef>(null);
 
 	// 初回マウント時にstoreから既存のコミケ情報リストを復元
@@ -50,6 +54,54 @@ export const TwitterAnalyzer = () => {
 		);
 		setComiketInfoList(allInfoList);
 	}, [boothUserMap]);
+
+	// 日付をフィルタリングする関数
+	const filterByDay = (infoList: ComiketInfo[]) => {
+		if (selectedDay === "all") return infoList;
+
+		return infoList.filter((info) => {
+			if (!info.date) return false;
+
+			// 土曜・8/16を1日目として扱う
+			if (selectedDay === "day1") {
+				return (
+					info.date === "1日目" || info.date === "土曜" || info.date === "8/16"
+				);
+			}
+			// 日曜・8/17を2日目として扱う
+			if (selectedDay === "day2") {
+				return (
+					info.date === "2日目" || info.date === "日曜" || info.date === "8/17"
+				);
+			}
+			return false;
+		});
+	};
+
+	// フィルタリングされたコミケ情報リスト
+	const filteredInfoList = filterByDay(comiketInfoList);
+
+	// フィルタリングされたブースマップ
+	const filteredBoothUserMap = new Map(
+		Array.from(boothUserMap.entries()).filter(([_, data]) => {
+			if (selectedDay === "all") return true;
+
+			const info = data.comiketInfo;
+			if (!info.date) return false;
+
+			if (selectedDay === "day1") {
+				return (
+					info.date === "1日目" || info.date === "土曜" || info.date === "8/16"
+				);
+			}
+			if (selectedDay === "day2") {
+				return (
+					info.date === "2日目" || info.date === "日曜" || info.date === "8/17"
+				);
+			}
+			return false;
+		}),
+	);
 
 	// ブースをクリックしてズーム
 	const handleBoothClick = (userData: BoothUserData) => {
@@ -269,12 +321,56 @@ export const TwitterAnalyzer = () => {
 			{/* 地図を画面いっぱいに表示 */}
 			<ZoomableComiketLayoutMap
 				ref={mapRef}
-				highlightedBooths={createHighlightData(comiketInfoList)}
-				boothUserMap={boothUserMap}
+				highlightedBooths={createHighlightData(filteredInfoList)}
+				boothUserMap={filteredBoothUserMap}
 			/>
 
 			{/* ツイート入力フォームを左上に配置 */}
 			<div className="absolute top-4 left-4 z-20 space-y-2">
+				{/* 日付フィルター */}
+				<div className="rounded-lg border bg-white/95 p-2 backdrop-blur">
+					<div className="mb-2 flex items-center gap-2 text-muted-foreground text-xs">
+						<Calendar className="h-3 w-3" />
+						日付フィルター
+					</div>
+					<ToggleGroup
+						type="single"
+						value={selectedDay}
+						onValueChange={(value) => {
+							if (value) setSelectedDay(value as "all" | "day1" | "day2");
+						}}
+						className="grid w-full grid-cols-3 gap-1"
+					>
+						<ToggleGroupItem
+							value="all"
+							className="h-8 text-xs"
+							aria-label="すべて表示"
+						>
+							すべて
+						</ToggleGroupItem>
+						<ToggleGroupItem
+							value="day1"
+							className="h-8 text-xs"
+							aria-label="1日目（土曜）"
+						>
+							1日目
+						</ToggleGroupItem>
+						<ToggleGroupItem
+							value="day2"
+							className="h-8 text-xs"
+							aria-label="2日目（日曜）"
+						>
+							2日目
+						</ToggleGroupItem>
+					</ToggleGroup>
+					{selectedDay !== "all" && (
+						<div className="mt-1 text-muted-foreground text-xs">
+							{selectedDay === "day1" && "土曜のブースを表示"}
+							{selectedDay === "day2" && "日曜のブースを表示"}
+						</div>
+					)}
+				</div>
+
 				{/* リスト表示ボタン */}
 				<Sheet>
 					<SheetTrigger asChild>
@@ -284,13 +380,19 @@ export const TwitterAnalyzer = () => {
 							disabled={boothUserMap.size === 0}
 						>
 							<List className="h-4 w-4" />
-							リストを表示 ({boothUserMap.size}件)
+							リストを表示 ({filteredBoothUserMap.size}/{boothUserMap.size}件)
 						</Button>
 					</SheetTrigger>
 					<SheetContent className="w-full gap-2">
 						<SheetHeader>
 							<SheetTitle>保存済みブース一覧</SheetTitle>
 							<div className="text-muted-foreground text-xs">
+								{selectedDay !== "all" && (
+									<>
+										{selectedDay === "day1" ? "1日目（土曜）" : "2日目（日曜）"}
+										:{filteredBoothUserMap.size} /
+									</>
+								)}
 								合計 {boothUserMap.size} 件
 							</div>
 						</SheetHeader>
@@ -313,7 +415,10 @@ export const TwitterAnalyzer = () => {
 							</div>
 						)}
 						<div className="mt-2 max-h-[calc(100vh-180px)] overflow-y-auto">
-							<SortableBoothList onBoothClick={handleBoothClick} />
+							<SortableBoothList
+								onBoothClick={handleBoothClick}
+								boothUserMap={filteredBoothUserMap}
+							/>
 						</div>
 					</SheetContent>
 				</Sheet>

@@ -21,18 +21,31 @@ import { SortableBoothItem } from "./SortableBoothItem";
 
 type SortableBoothListProps = {
 	onBoothClick: (userData: BoothUserData) => void;
+	boothUserMap?: Map<string, BoothUserData>;
 };
 
-export const SortableBoothList = ({ onBoothClick }: SortableBoothListProps) => {
+export const SortableBoothList = ({
+	onBoothClick,
+	boothUserMap,
+}: SortableBoothListProps) => {
 	const {
 		getOrderedBooths,
 		toggleBoothVisited,
 		isBoothVisited,
 		removeBoothUser,
 		reorderBooths,
+		boothUserMap: storeBoothUserMap,
 	} = useBoothStore();
 
-	const orderedBooths = getOrderedBooths();
+	// プロップスで渡されたマップか、storeのマップを使用
+	const activeBoothUserMap = boothUserMap ?? storeBoothUserMap;
+
+	// フィルタリングされたマップから順序付きブースを取得
+	const orderedBooths = getOrderedBooths()
+		.filter(([key]) => activeBoothUserMap.has(key))
+		.map(
+			([key]) => [key, activeBoothUserMap.get(key)!] as [string, BoothUserData],
+		);
 	const boothKeys = orderedBooths.map(([key]) => key);
 
 	const sensors = useSensors(
