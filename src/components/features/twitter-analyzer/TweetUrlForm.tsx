@@ -78,6 +78,9 @@ export const TweetUrlForm = ({
 							例: https://x.com/username/status/1234567890
 						</p>
 						{error && <p className="text-red-500 text-sm">{error}</p>}
+						<p className="text-muted-foreground text-xs">
+							※ 取得できない場合は手動入力も可能です
+						</p>
 					</div>
 				</form>
 			</CardContent>
