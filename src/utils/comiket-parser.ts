@@ -1,3 +1,5 @@
+import { createDatePatternRegex } from "./comiket-date-utils";
+
 export type ComiketInfo = {
 	date?: string; // 日付情報（土曜日、日曜日、1日目、2日目、8/15など）
 	hall?: string; // ホール（東、西、南）
@@ -14,13 +16,28 @@ export type ComiketInfo = {
  * @returns 抽出されたコミケ情報の配列
  */
 export const extractComiketInfoList = (text: string): ComiketInfo[] => {
-	// 「&」や「、」で区切られている可能性があるので分割
-	const segments = text.split(/[&、,]/);
 	const results: ComiketInfo[] = [];
 
-	for (const segment of segments) {
-		const info = extractSingleComiketInfo(segment);
-		// 少なくともホールかスペース番号があれば有効とみなす
+	// 日付パターンで分割を試みる
+	const datePatterns = createDatePatternRegex();
+	const matches = Array.from(text.matchAll(datePatterns));
+
+	if (matches.length >= 2) {
+		// 複数の日付が見つかった場合、それぞれを境界として分割
+		for (let i = 0; i < matches.length; i++) {
+			const startIndex = matches[i].index || 0;
+			const endIndex =
+				i < matches.length - 1 ? matches[i + 1].index : text.length;
+			const segment = text.substring(startIndex, endIndex);
+
+			const info = extractSingleComiketInfo(segment);
+			if (info.hall || info.space) {
+				results.push(info);
+			}
+		}
+	} else {
+		// 日付パターンが1つ以下の場合は単一の情報として処理
+		const info = extractSingleComiketInfo(text);
 		if (info.hall || info.space) {
 			results.push(info);
 		}
@@ -107,6 +124,8 @@ const extractSingleComiketInfo = (text: string): ComiketInfo => {
 		/[東西南]\d\s+([あ-んア-ンa-zA-Zａ-ｚＡ-Ｚ])[-－ー\s]*\d{2}/,
 		// ホールの後のブロック（南ｐ-29ab、南a-42aのような形式）
 		/[東西南]\s*([あ-んア-ンa-zA-Zａ-ｚＡ-Ｚ])[-－ー\s]*\d{2}/,
+		// ホール+数字+「ホール」の後のブロック（南4ホールl31bのような形式）
+		/[東西南]\d*ホール([あ-んア-ンa-zA-Zａ-ｚＡ-Ｚ])\d{2}/,
 		// ハイフンの前のブロック（r-01aのような形式）
 		/\b([あ-んア-ンa-zA-Zａ-ｚＡ-Ｚ])[-－ー]\d{2}/,
 	];
@@ -135,6 +154,8 @@ const extractSingleComiketInfo = (text: string): ComiketInfo => {
 		/[東西南][^0-9]*?(\d{2})(?:[ab\s]|$)/,
 		// ハイフンの後の番号
 		/[-－ー]\s*(\d{2})(?:[ab\s]|$)/,
+		// ブロック文字の直後の番号（l31bのような形式）
+		/[あ-んア-ンa-zA-Zａ-ｚＡ-Ｚ](\d{2})(?:[ab\s]|$)/,
 		// 単独の2桁数字
 		/\b(\d{2})(?:[ab\s]|$)/,
 	];
