@@ -1,10 +1,11 @@
 import { create } from "zustand";
 import type { ZoomableComiketLayoutMapRef } from "@/components/features/comiket-layout-map/ZoomableComiketLayoutMap";
+import type { ComiketDayFilter } from "@/utils/comiket-date-utils";
 
 type MapState = {
-	selectedDay: "all" | "day1" | "day2";
+	selectedDay: ComiketDayFilter;
 	mapRef: ZoomableComiketLayoutMapRef | null;
-	setSelectedDay: (day: "all" | "day1" | "day2") => void;
+	setSelectedDay: (day: ComiketDayFilter) => void;
 	setMapRef: (ref: ZoomableComiketLayoutMapRef | null) => void;
 	centerOnBooth: (block: string, boothNumber: number) => void;
 };
