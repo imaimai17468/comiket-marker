@@ -43,9 +43,11 @@ export const SortableBoothList = ({
 	// フィルタリングされたマップから順序付きブースを取得
 	const orderedBooths = getOrderedBooths()
 		.filter(([key]) => activeBoothUserMap.has(key))
-		.map(
-			([key]) => [key, activeBoothUserMap.get(key)!] as [string, BoothUserData],
-		);
+		.map(([key]) => {
+			const data = activeBoothUserMap.get(key);
+			return data ? ([key, data] as [string, BoothUserData]) : null;
+		})
+		.filter((item): item is [string, BoothUserData] => item !== null);
 	const boothKeys = orderedBooths.map(([key]) => key);
 
 	const sensors = useSensors(

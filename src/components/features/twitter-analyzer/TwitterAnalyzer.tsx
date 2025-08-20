@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, Calendar, List, Trash2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import type { BoothUserData } from "@/components/features/comiket-layout-map/types";
@@ -8,30 +8,21 @@ import ZoomableComiketLayoutMap, {
 	type ZoomableComiketLayoutMapRef,
 } from "@/components/features/comiket-layout-map/ZoomableComiketLayoutMap";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "@/components/ui/sheet";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import type { TwitterUser } from "@/entities/twitter-user";
 import { isTwitterError } from "@/gateways/twitter-user";
 import { useBoothStore } from "@/stores/booth-store";
+import { useMapStore } from "@/stores/map-store";
 import {
 	type ComiketInfo,
 	extractComiketInfoList,
 } from "@/utils/comiket-parser";
 import { ManualBoothForm } from "./ManualBoothForm";
 import { createHighlightData, formatErrorMessage } from "./presenter";
-import { SortableBoothList } from "./SortableBoothList";
 import { TweetUrlForm } from "./TweetUrlForm";
 
 export const TwitterAnalyzer = () => {
-	const { boothUserMap, addMultipleBoothUsers, clearAllBooths } =
-		useBoothStore();
+	const { boothUserMap, addMultipleBoothUsers } = useBoothStore();
+	const { selectedDay, setMapRef } = useMapStore();
 	const [comiketInfoList, setComiketInfoList] = useState<ComiketInfo[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -42,9 +33,6 @@ export const TwitterAnalyzer = () => {
 	const [parsedPartialInfo, setParsedPartialInfo] = useState<
 		Partial<ComiketInfo> | undefined
 	>();
-	const [selectedDay, setSelectedDay] = useState<"all" | "day1" | "day2">(
-		"all",
-	);
 	const mapRef = useRef<ZoomableComiketLayoutMapRef>(null);
 
 	// 初回マウント時にstoreから既存のコミケ情報リストを復元
@@ -54,6 +42,13 @@ export const TwitterAnalyzer = () => {
 		);
 		setComiketInfoList(allInfoList);
 	}, [boothUserMap]);
+
+	// mapRefをstoreに登録
+	useEffect(() => {
+		if (mapRef.current) {
+			setMapRef(mapRef.current);
+		}
+	}, [setMapRef]);
 
 	// 日付をフィルタリングする関数
 	const filterByDay = (infoList: ComiketInfo[]) => {
@@ -102,16 +97,6 @@ export const TwitterAnalyzer = () => {
 			return false;
 		}),
 	);
-
-	// ブースをクリックしてズーム
-	const handleBoothClick = (userData: BoothUserData) => {
-		const info = userData.comiketInfo;
-		if (info.block && info.space && mapRef.current) {
-			// ハイライト時と同じように、ひらがなはそのまま、カタカナはそのまま使用
-			console.log("Centering on booth from list:", info.block, info.space);
-			mapRef.current.centerOnBooth(info.block, Number(info.space));
-		}
-	};
 
 	const handleUrlSubmit = async (url: string) => {
 		setIsLoading(true);
@@ -327,102 +312,6 @@ export const TwitterAnalyzer = () => {
 
 			{/* ツイート入力フォームを左上に配置 */}
 			<div className="absolute top-4 left-4 z-20 space-y-2">
-				{/* 日付フィルター */}
-				<div className="rounded-lg border bg-white/95 p-2 backdrop-blur">
-					<div className="mb-2 flex items-center gap-2 text-muted-foreground text-xs">
-						<Calendar className="h-3 w-3" />
-						日付フィルター
-					</div>
-					<ToggleGroup
-						type="single"
-						value={selectedDay}
-						onValueChange={(value) => {
-							if (value) setSelectedDay(value as "all" | "day1" | "day2");
-						}}
-						className="grid w-full grid-cols-3 gap-1"
-					>
-						<ToggleGroupItem
-							value="all"
-							className="h-8 text-xs"
-							aria-label="すべて表示"
-						>
-							すべて
-						</ToggleGroupItem>
-						<ToggleGroupItem
-							value="day1"
-							className="h-8 text-xs"
-							aria-label="1日目（土曜）"
-						>
-							1日目
-						</ToggleGroupItem>
-						<ToggleGroupItem
-							value="day2"
-							className="h-8 text-xs"
-							aria-label="2日目（日曜）"
-						>
-							2日目
-						</ToggleGroupItem>
-					</ToggleGroup>
-					{selectedDay !== "all" && (
-						<div className="mt-1 text-muted-foreground text-xs">
-							{selectedDay === "day1" && "土曜のブースを表示"}
-							{selectedDay === "day2" && "日曜のブースを表示"}
-						</div>
-					)}
-				</div>
-
-				{/* リスト表示ボタン */}
-				<Sheet>
-					<SheetTrigger asChild>
-						<Button
-							variant="outline"
-							className="w-full bg-white/95 backdrop-blur"
-							disabled={boothUserMap.size === 0}
-						>
-							<List className="h-4 w-4" />
-							リストを表示 ({filteredBoothUserMap.size}/{boothUserMap.size}件)
-						</Button>
-					</SheetTrigger>
-					<SheetContent className="w-full gap-2">
-						<SheetHeader>
-							<SheetTitle>保存済みブース一覧</SheetTitle>
-							<div className="text-muted-foreground text-xs">
-								{selectedDay !== "all" && (
-									<>
-										{selectedDay === "day1" ? "1日目（土曜）" : "2日目（日曜）"}
-										:{filteredBoothUserMap.size} /
-									</>
-								)}
-								合計 {boothUserMap.size} 件
-							</div>
-						</SheetHeader>
-						{boothUserMap.size > 0 && (
-							<div className="flex justify-end">
-								<Button
-									variant="ghost"
-									size="sm"
-									onClick={() => {
-										if (confirm("すべてのブース情報を削除しますか？")) {
-											clearAllBooths();
-											setComiketInfoList([]);
-										}
-									}}
-									className="h-7 text-destructive text-xs hover:bg-destructive/10 hover:text-destructive"
-								>
-									<Trash2 className="h-3 w-3" />
-									すべて削除
-								</Button>
-							</div>
-						)}
-						<div className="mt-2 max-h-[calc(100vh-180px)] overflow-y-auto">
-							<SortableBoothList
-								onBoothClick={handleBoothClick}
-								boothUserMap={filteredBoothUserMap}
-							/>
-						</div>
-					</SheetContent>
-				</Sheet>
-
 				<TweetUrlForm onSubmit={handleUrlSubmit} isLoading={isLoading} />
 
 				{error && (

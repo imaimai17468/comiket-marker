@@ -98,7 +98,7 @@ export default function RootLayout({
 				className={`antialiased ${geistMono.variable} ${zenKakuGothicNew.variable} ${zenKakuGothicNew.className}`}
 			>
 				<Header />
-				<main className="min-h-screen w-full pt-[72px]">{children}</main>
+				<main className="min-h-screen w-full">{children}</main>
 				<TwitterScriptLoader />
 				<Toaster />
 			</body>
