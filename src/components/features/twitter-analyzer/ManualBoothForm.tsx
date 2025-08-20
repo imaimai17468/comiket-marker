@@ -181,7 +181,7 @@ export const ManualBoothForm = ({
 									onChange={(e) => {
 										const value = e.target.value.replace(/[^0-9]/g, "");
 										if (value.length <= 2) {
-											setSpace(value.padStart(2, "0"));
+											setSpace(value);
 										}
 									}}
 									placeholder="例: 23"
