@@ -16,6 +16,7 @@ import {
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useBoothStore } from "@/stores/booth-store";
 import { useMapStore } from "@/stores/map-store";
+import { matchesDateFilter } from "@/utils/comiket-date-utils";
 
 export const Header = () => {
 	const { boothUserMap, clearAllBooths } = useBoothStore();
@@ -25,22 +26,7 @@ export const Header = () => {
 	// フィルタリングされたブースマップ
 	const filteredBoothUserMap = new Map(
 		Array.from(boothUserMap.entries()).filter(([_, data]) => {
-			if (selectedDay === "all") return true;
-
-			const info = data.comiketInfo;
-			if (!info.date) return false;
-
-			if (selectedDay === "day1") {
-				return (
-					info.date === "1日目" || info.date === "土曜" || info.date === "8/16"
-				);
-			}
-			if (selectedDay === "day2") {
-				return (
-					info.date === "2日目" || info.date === "日曜" || info.date === "8/17"
-				);
-			}
-			return false;
+			return matchesDateFilter(data.comiketInfo.date, selectedDay);
 		}),
 	);
 
